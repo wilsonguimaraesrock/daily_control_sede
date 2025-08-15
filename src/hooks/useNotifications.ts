@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSupabaseAuth } from './useSupabaseAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 import { Task } from '@/types/task';
 import { useToast } from '@/hooks/use-toast';
 import React from 'react';
@@ -76,7 +75,7 @@ export const useNotifications = () => {
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isSupported, setIsSupported] = useState(false);
-  const { currentUser } = useSupabaseAuth();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
 
   // 🚫 SISTEMA DE NOTIFICAÇÕES COMPLETAMENTE DESATIVADO

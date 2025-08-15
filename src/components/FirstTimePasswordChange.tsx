@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock, Eye, EyeOff, LogOut } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { sanitizeInput } from '@/utils/inputValidation';
 import { APP_NAME } from '@/constants/app';
 import Logo from '@/components/ui/Logo';
@@ -19,7 +19,7 @@ const FirstTimePasswordChange: React.FC = () => {
     new: false,
     confirm: false
   });
-  const { firstTimePasswordChange, logout } = useSupabaseAuth();
+  const { firstTimePasswordChange, logout } = useAuth();
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();

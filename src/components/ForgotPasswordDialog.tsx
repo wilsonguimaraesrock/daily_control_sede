@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { sanitizeInput } from '@/utils/inputValidation';
 
 interface ForgotPasswordDialogProps {
@@ -16,7 +16,7 @@ const ForgotPasswordDialog: React.FC<ForgotPasswordDialogProps> = ({ isOpen, onC
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
-  const { resendTemporaryPassword } = useSupabaseAuth();
+  const { resendTemporaryPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

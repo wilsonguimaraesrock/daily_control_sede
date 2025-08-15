@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { AuthProvider, useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import Index from '@/pages/Index';
 import LoginForm from '@/components/LoginForm';
 import FirstTimePasswordChange from '@/components/FirstTimePasswordChange';
@@ -104,7 +104,7 @@ function LoadingScreen() {
 }
 
 function AppContent() {
-  const { currentUser, needsPasswordChange, loading } = useSupabaseAuth();
+  const { currentUser, needsPasswordChange, loading } = useAuth();
   const [debugMode, setDebugMode] = useState(false);
   
   // Check for debug mode in URL

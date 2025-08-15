@@ -3,13 +3,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LogOut, Crown, Shield, User, GraduationCap, UserCheck, FileText, UserCog } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import NotificationCenter from './NotificationCenter';
 import Logo from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 const UserHeader: React.FC = () => {
-  const { currentUser, logout } = useSupabaseAuth();
+  const { currentUser, logout } = useAuth();
 
   if (!currentUser) return null;
 

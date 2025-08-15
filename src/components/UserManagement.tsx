@@ -8,10 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Users, Plus, Crown, Shield, User as UserIcon, UserX, Mail, CheckCircle, Clock, RefreshCw, Trash2, UserMinus, Eye, EyeOff, GraduationCap, UserCheck, FileText, UserCog, Edit, UserPlus } from 'lucide-react';
 import { User } from '@/types/user';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import PasswordManagement from './PasswordManagement';
-import { supabase } from '@/integrations/supabase/client';
 
 const UserManagement: React.FC = () => {
   const [confirmedUsers, setConfirmedUsers] = useState<User[]>([]);
@@ -36,13 +35,10 @@ const UserManagement: React.FC = () => {
     canAccessUserManagement, 
     createUser, 
     updateUser,
-    getAllUsers, 
-    refreshProfile,
-    changePassword,
+    getVisibleUsers, 
     deleteUser,
-    toggleUserStatus,
     currentUser
-  } = useSupabaseAuth();
+  } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {

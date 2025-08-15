@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserProfile {
   user_id: string;
@@ -34,7 +34,7 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
   userProfiles,
   onClearFilters
 }) => {
-  const { currentUser } = useSupabaseAuth();
+  const { currentUser } = useAuth();
 
   // Todos os usuários autenticados podem usar os filtros avançados
   const canUseAdvancedFilters = currentUser && currentUser.role;

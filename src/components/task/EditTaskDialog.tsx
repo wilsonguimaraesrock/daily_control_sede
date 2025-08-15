@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Save, Key, Loader2, AlertCircle } from 'lucide-react';
 import UserSelector from '../UserSelector';
 import { EditTask } from '@/types/task';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface EditTaskDialogProps {
@@ -44,7 +44,7 @@ const EditTaskDialog: React.FC<EditTaskDialogProps> = ({
    * - Supervisor ADM: ✅ Pode editar datas de prazo
    * - Outros níveis: ❌ Não podem editar datas de prazo
    */
-  const { canEditTaskDueDate } = useSupabaseAuth();
+  const { canEditTaskDueDate } = useAuth();
 
   /**
    * Extrai a parte da data de uma string para uso em input type="date"

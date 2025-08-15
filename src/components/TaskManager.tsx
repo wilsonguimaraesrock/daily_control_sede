@@ -14,11 +14,11 @@ import TaskFilters from './task/TaskFilters';
 import AdvancedTaskFilters from './task/AdvancedTaskFilters';
 import TaskDetailsModal from './task/TaskDetailsModal';
 import { useTaskManager } from '@/hooks/useTaskManager';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { getStatusColor, getPriorityColor, getStatusLabel, getPriorityLabel } from '@/utils/taskUtils';
 import { formatDateToBR, formatTimeToBR, isSameDay, getTodayBR, getWeekDaysBR, getMonthDaysBR, getViewTitleBR } from '@/utils/dateUtils';
 import { NewTask, Task, EditTask } from '@/types/task';
-import { useUserProfiles } from '@/hooks/useUserProfiles';
+
 
 /* 
  * ⚠️  ATENÇÃO - ÁREA LIVRE DE DEBUG ⚠️ 
@@ -67,8 +67,8 @@ const TaskManager = () => {
     lastUpdateTime
   } = useTaskManager();
 
-  const { currentUser } = useSupabaseAuth();
-  const { getUserName, userProfiles } = useUserProfiles();
+  const { currentUser } = useAuth();
+  // userProfiles será obtido via useTaskManager
   
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreatingTask, setIsCreatingTask] = useState(false);

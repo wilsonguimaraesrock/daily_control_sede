@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  id           String    @id @default(cuid())
+  userId       String    @unique @map("user_id")
+  name         String
+  email        String    @unique
+  role         Role
+  isActive     Boolean   @default(true) @map("is_active")
+  passwordHash String?   @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastLogin    DateTime? @map("last_login")
+  
+  // Relacionamentos
+  createdTasks Task[] @relation("TaskCreator")
+  assignedTasks TaskAssignment[]
+  
+  @@map("user_profiles")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?    @db.Text
+  status      TaskStatus @default(PENDENTE)
+  priority    Priority   @default(MEDIA)
+  dueDate     DateTime?  @map("due_date") @db.Date
+  createdBy   String     @map("created_by")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  completedAt DateTime?  @map("completed_at")
+  isPrivate   Boolean?   @default(false) @map("is_private")
+  
+  // Relacionamentos
+  creator UserProfile @relation("TaskCreator", fields: [createdBy], references: [userId])
+  assignments TaskAssignment[]
+  editHistory TaskEditHistory[]
+  
+  @@map("tasks")
+}
+
+model TaskAssignment {
+  id     String @id @default(cuid())
+  taskId String @map("task_id")
+  userId String @map("user_id")
+  
+  // Relacionamentos
+  task Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user UserProfile @relation(fields: [userId], references: [userId])
+  
+  @@unique([taskId, userId])
+  @@map("task_assignments")
+}
+
+model TaskEditHistory {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  editedBy  String   @map("edited_by")
+  editedAt  DateTime @default(now()) @map("edited_at")
+  changes   Json
+  
+  // Relacionamentos
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  @@map("task_edit_history")
+}
+
+model AvailableMonth {
+  id          String  @id @default(cuid())
+  monthValue  String  @map("month_value")
+  displayName String  @map("display_name")
+  isActive    Boolean @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  @@map("available_months")
+}
+
+// Enums
+enum Role {
+  admin
+  franqueado
+  vendedor
+  
+  @@map("role")
+}
+
+enum TaskStatus {
+  PENDENTE    @map("pendente")
+  EM_ANDAMENTO @map("em_andamento")
+  CONCLUIDA   @map("concluida")
+  CANCELADA   @map("cancelada")
+  
+  @@map("task_status")
+}
+
+enum Priority {
+  BAIXA   @map("baixa")
+  MEDIA   @map("media")
+  ALTA    @map("alta")
+  URGENTE @map("urgente")
+  
+  @@map("priority")
+}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Calendar, Users, LogOut, Bell } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import UserManagement from '@/components/UserManagement';
 import TaskManager from '@/components/TaskManager';
 import UserHeader from '@/components/UserHeader';
@@ -11,7 +11,7 @@ import NotificationTestPanel from '@/components/NotificationTestPanel';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('tasks');
-  const { currentUser, logout, canAccessUserManagement } = useSupabaseAuth();
+  const { currentUser, logout, canAccessUserManagement } = useAuth();
 
   const handleLogout = async () => {
     await logout();

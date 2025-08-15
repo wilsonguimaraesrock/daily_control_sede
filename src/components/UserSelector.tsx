@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { X, Plus, Crown, Shield, User as UserIcon, GraduationCap, UserCheck, FileText, UserCog } from 'lucide-react';
 import { User } from '@/types/user';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserSelectorProps {
   selectedUsers: string[];
@@ -23,7 +23,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const { getVisibleUsers } = useSupabaseAuth();
+  const { getVisibleUsers } = useAuth();
 
   useEffect(() => {
     loadUsers();

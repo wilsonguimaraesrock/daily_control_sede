@@ -7,7 +7,7 @@ import { Task } from '@/types/task';
 import { getStatusColor, getPriorityColor, getStatusLabel, getPriorityLabel } from '@/utils/taskUtils';
 import { formatDateToBR, formatDateTimeToBR } from '@/utils/dateUtils';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useUserProfiles } from '@/hooks/useUserProfiles';
+
 
 interface TaskDetailsModalProps {
   task: Task | null;
@@ -30,7 +30,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   canDelete = false,
   isUpdating
 }) => {
-  const { getUserName } = useUserProfiles();
+  // getUserName será implementado localmente se necessário
 
   if (!task) return null;
 

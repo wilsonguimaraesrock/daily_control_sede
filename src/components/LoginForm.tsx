@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Mail, Lock, HelpCircle } from 'lucide-react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { sanitizeInput } from '@/utils/inputValidation';
 import { APP_NAME } from '@/constants/app';
 import Logo from '@/components/ui/Logo';
@@ -15,7 +15,7 @@ const LoginForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempts, setLoginAttempts] = useState(0);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { login } = useSupabaseAuth();
+  const { login } = useAuth();
 
   // Debug: Confirmar que o LoginForm está usando o componente Logo
   console.log('🔄 LoginForm carregado com componente Logo em:', new Date().toLocaleTimeString());
