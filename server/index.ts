@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const db = require('./lib/prisma');
+const prisma = require('./lib/prisma');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const taskRoutes = require('./routes/tasks');
@@ -42,7 +42,7 @@ const server = app.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
-  await db.$disconnect();
+  await prisma.$disconnect();
   server.close(() => {
     console.log('Server closed.');
     process.exit(0);
