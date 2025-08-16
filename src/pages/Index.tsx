@@ -2,16 +2,20 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, LogOut, Bell } from 'lucide-react';
+import { Calendar, Users, LogOut, Bell, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import UserManagement from '@/components/UserManagement';
 import TaskManager from '@/components/TaskManager';
 import UserHeader from '@/components/UserHeader';
 import NotificationTestPanel from '@/components/NotificationTestPanel';
+import { FranchiseAdminDashboard } from '@/components/FranchiseAdminDashboard';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('tasks');
-  const { currentUser, logout, canAccessUserManagement } = useAuth();
+  const { currentUser, logout, canAccessUserManagement, isSuperAdmin } = useAuth();
+  
+  // Check if user can access franchise dashboard
+  const canAccessFranchise = isSuperAdmin() || currentUser?.role === 'franchise_admin';
 
   const handleLogout = async () => {
     await logout();
@@ -29,7 +33,10 @@ const Index = () => {
         <div className="mb-6" />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className={`grid w-full ${canAccessUserManagement() ? 'grid-cols-3' : 'grid-cols-2'} bg-muted border border-border`}>
+          <TabsList className={`grid w-full ${
+            canAccessFranchise && canAccessUserManagement() ? 'grid-cols-4' :
+            canAccessFranchise || canAccessUserManagement() ? 'grid-cols-3' : 'grid-cols-2'
+          } bg-muted border border-border`}>
             <TabsTrigger 
               value="tasks" 
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -56,6 +63,16 @@ const Index = () => {
                 <span className="sm:hidden">Usuários</span>
               </TabsTrigger>
             )}
+            {canAccessFranchise && (
+              <TabsTrigger 
+                value="franchise" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Building2 className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Franqueadora</span>
+                <span className="sm:hidden">Franq.</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="tasks" className="space-y-6">
@@ -79,6 +96,12 @@ const Index = () => {
                   <UserManagement />
                 </CardContent>
               </Card>
+            </TabsContent>
+          )}
+          
+          {canAccessFranchise && (
+            <TabsContent value="franchise" className="space-y-6">
+              <FranchiseAdminDashboard />
             </TabsContent>
           )}
         </Tabs>

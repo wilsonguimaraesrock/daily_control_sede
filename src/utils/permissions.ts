@@ -418,6 +418,32 @@ export function getRoleColor(role: UserRole): string {
 }
 
 /**
+ * Obtém ícone do role para UI
+ */
+export function getRoleIcon(role: UserRole): string {
+  // Returns class names for lucide-react icons
+  const iconMap: Record<UserRole, string> = {
+    'super_admin': 'Crown',
+    'franchise_admin': 'Shield',
+    'franchise_analyst': 'BarChart3',
+    'admin': 'Crown',
+    'franqueado': 'Shield', 
+    'gerente_comercial': 'Briefcase',
+    'coordenador': 'UserCheck',
+    'supervisor_adm': 'UserCog',
+    'assessora_adm': 'FileText',
+    'vendedor': 'User',
+    'professor': 'GraduationCap',
+    'departamento_head': 'Building2',
+    'departamento_manager': 'Users',
+    'departamento_analyst': 'TrendingUp',
+    'departamento_assistant': 'User'
+  };
+  
+  return iconMap[role] || 'User';
+}
+
+/**
  * Obtém label amigável do role
  */
 export function getRoleLabel(role: UserRole): string {

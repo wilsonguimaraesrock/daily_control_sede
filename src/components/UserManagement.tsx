@@ -10,7 +10,8 @@ import { Users, Plus, Crown, Shield, User as UserIcon, UserX, Mail, CheckCircle,
 import { User } from '@/types/user';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import PasswordManagement from './PasswordManagement';
+import { PasswordManagement } from './PasswordManagement';
+import { getRoleColor, getRoleLabel } from '@/utils/permissions';
 
 const UserManagement: React.FC = () => {
   const [confirmedUsers, setConfirmedUsers] = useState<User[]>([]);
@@ -98,20 +99,8 @@ const UserManagement: React.FC = () => {
     return null;
   }
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-500/20 text-red-400';
-      case 'franqueado': return 'bg-blue-500/20 text-blue-400';
-      case 'vendedor': return 'bg-green-500/20 text-green-400';
-      case 'professor': return 'bg-purple-500/20 text-purple-400';
-      case 'coordenador': return 'bg-orange-500/20 text-orange-400';
-      case 'assessora_adm': return 'bg-pink-500/20 text-pink-400';
-      case 'supervisor_adm': return 'bg-indigo-500/20 text-indigo-400';
-      default: return 'bg-gray-500/20 text-gray-400';
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
+  // Helper to get role icon component
+  const getRoleIconComponent = (role: string) => {
     switch (role) {
       case 'admin': return <Crown className="w-4 h-4" />;
       case 'franqueado': return <Shield className="w-4 h-4" />;
@@ -120,22 +109,16 @@ const UserManagement: React.FC = () => {
       case 'coordenador': return <UserCheck className="w-4 h-4" />;
       case 'assessora_adm': return <FileText className="w-4 h-4" />;
       case 'supervisor_adm': return <UserCog className="w-4 h-4" />;
+      case 'super_admin': return <Crown className="w-4 h-4 text-red-600" />;
+      case 'franchise_admin': return <Shield className="w-4 h-4 text-purple-600" />;
+      case 'gerente_comercial': return <UserIcon className="w-4 h-4 text-orange-600" />;
       default: return <UserX className="w-4 h-4" />;
     }
   };
 
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'admin': return 'Administrador';
-      case 'franqueado': return 'Franqueado';
-      case 'vendedor': return 'Vendedor';
-      case 'professor': return 'Professor';
-      case 'coordenador': return 'Coordenador';
-      case 'assessora_adm': return 'Assessora ADM';
-      case 'supervisor_adm': return 'Supervisor ADM';
-      default: return role;
-    }
-  };
+
+
+
 
   const handleCreateUser = async () => {
     if (!newUser.name || !newUser.email) {
@@ -455,7 +438,7 @@ const UserManagement: React.FC = () => {
                   <div className={`p-2 rounded-lg ${
                     user.is_active === false ? 'bg-red-500/20' : 'bg-muted dark:bg-slate-600/50'
                   }`}>
-                    {getRoleIcon(user.role)}
+                    {getRoleIconComponent(user.role)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center space-x-2">
@@ -479,7 +462,7 @@ const UserManagement: React.FC = () => {
                   
                   {user.id !== currentUser?.id && (
                     <div className="flex flex-wrap gap-2">
-                      <PasswordManagement userId={user.id} userName={user.name} />
+                      <PasswordManagement user={user} onPasswordReset={loadUsers} />
                       
                       <Button
                         onClick={() => handleEditUser(user)}
