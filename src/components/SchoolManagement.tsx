@@ -30,7 +30,8 @@ import {
   AlertCircle,
   Building2,
   Users,
-  Settings
+  Settings,
+  RotateCcw
 } from 'lucide-react';
 
 interface SchoolData {
@@ -92,17 +93,94 @@ export const SchoolManagement: React.FC = () => {
   const loadSchools = async () => {
     try {
       setLoading(true);
-      const orgs = await getOrganizations();
-      const schoolsOnly = orgs.filter(org => org.type === 'SCHOOL');
       
-      // TODO: Load admin users for each school
-      const schoolsWithAdmins = schoolsOnly.map(school => ({
-        ...school,
-        admin: undefined, // Would load from API
-        adminPassword: undefined
-      }));
+      // TEMPORARY: Use mock data until PostgreSQL backend is ready
+      console.log('🔄 Loading mock schools data...');
       
-      setSchools(schoolsWithAdmins);
+      const mockSchools: SchoolWithAdmin[] = [
+        {
+          id: 'rockfeller-centro-001',
+          name: 'Rockfeller Centro',
+          code: 'RFC001',
+          type: 'SCHOOL',
+          settings: {
+            canEditDueDates: true,
+            allowPrivateTasks: false,
+            branding: { title: 'Daily Control - Rockfeller Centro', logo: '/assets/rockfeller-logo.png' }
+          },
+          isActive: true,
+          createdAt: new Date('2024-02-15'),
+          updatedAt: new Date(),
+          admin: {
+            id: 'admin-rfc001',
+            user_id: 'admin-rfc001',
+            organization_id: 'rockfeller-centro-001',
+            name: 'Admin Rockfeller Centro',
+            email: 'admin.rfc001@rockfeller.edu.br',
+            role: 'admin',
+            is_active: true,
+            created_at: new Date('2024-02-15'),
+            first_login_completed: false
+          },
+          adminPassword: '170834'
+        },
+        {
+          id: 'rockfeller-norte-002',
+          name: 'Rockfeller Norte',
+          code: 'RFC002',
+          type: 'SCHOOL',
+          settings: {
+            canEditDueDates: true,
+            allowPrivateTasks: false,
+            branding: { title: 'Daily Control - Rockfeller Norte', logo: '/assets/rockfeller-logo.png' }
+          },
+          isActive: true,
+          createdAt: new Date('2024-03-01'),
+          updatedAt: new Date(),
+          admin: {
+            id: 'admin-rfc002',
+            user_id: 'admin-rfc002', 
+            organization_id: 'rockfeller-norte-002',
+            name: 'Admin Rockfeller Norte',
+            email: 'admin.rfc002@rockfeller.edu.br',
+            role: 'admin',
+            is_active: true,
+            created_at: new Date('2024-03-01'),
+            first_login_completed: false
+          },
+          adminPassword: '700192'
+        },
+        {
+          id: 'rockfeller-sul-003',
+          name: 'Rockfeller Sul',
+          code: 'RFC003',
+          type: 'SCHOOL',
+          settings: {
+            canEditDueDates: true,
+            allowPrivateTasks: false,
+            branding: { title: 'Daily Control - Rockfeller Sul', logo: '/assets/rockfeller-logo.png' }
+          },
+          isActive: true,
+          createdAt: new Date('2024-03-15'),
+          updatedAt: new Date(),
+          admin: {
+            id: 'admin-rfc003',
+            user_id: 'admin-rfc003',
+            organization_id: 'rockfeller-sul-003',
+            name: 'Admin Rockfeller Sul',
+            email: 'admin.rfc003@rockfeller.edu.br',
+            role: 'admin',
+            is_active: true,
+            created_at: new Date('2024-03-15'),
+            first_login_completed: false
+          },
+          adminPassword: '846934'
+        }
+      ];
+      
+      setSchools(mockSchools);
+      console.log('✅ Mock schools loaded successfully');
+      
     } catch (error) {
       console.error('Error loading schools:', error);
       toast({
@@ -184,25 +262,36 @@ export const SchoolManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      // Create organization
-      const organization = await createOrganization({
+      // TEMPORARY: Simulate school creation with mock data
+      console.log('🔄 Creating school with mock data...');
+      
+      // Generate 6-digit password
+      const randomPassword = generateRandomPassword();
+      
+      // Create mock organization
+      const newOrganization: Organization = {
+        id: `school-${Date.now()}`,
         name: formData.name,
         code: formData.code,
         type: 'SCHOOL',
-        settings: formData.settings
-      });
+        settings: formData.settings,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
 
-      // Create admin user
-      const adminUser = await createUserInOrganization({
+      // Create mock admin user
+      const adminUser: User = {
+        id: `admin-${Date.now()}`,
+        user_id: `admin-${formData.code.toLowerCase()}`,
+        organization_id: newOrganization.id,
         name: formData.adminName,
         email: formData.adminEmail,
         role: 'admin',
         is_active: true,
+        created_at: new Date(),
         first_login_completed: false
-      }, organization.id);
-
-      // Generate temporary password
-      const passwordReset = await generateTemporaryPassword(adminUser.user_id);
+      };
 
       toast({
         title: "Escola criada com sucesso!",
@@ -211,15 +300,17 @@ export const SchoolManagement: React.FC = () => {
 
       // Show password in a separate dialog
       const newSchool: SchoolWithAdmin = {
-        ...organization,
+        ...newOrganization,
         admin: adminUser,
-        adminPassword: passwordReset.newPassword
+        adminPassword: randomPassword
       };
 
       setSchools(prev => [...prev, newSchool]);
       setSelectedSchool(newSchool);
       setIsCreateDialogOpen(false);
       resetForm();
+      
+      console.log(`✅ School created: ${formData.name} - Password: ${randomPassword}`);
       
     } catch (error) {
       console.error('Error creating school:', error);
@@ -243,6 +334,25 @@ export const SchoolManagement: React.FC = () => {
 
   const togglePasswordVisibility = (schoolId: string) => {
     setShowPassword(showPassword === schoolId ? '' : schoolId);
+  };
+
+  const resetSchoolPassword = (schoolId: string, schoolName: string) => {
+    // Generate new 6-digit password
+    const newPassword = generateRandomPassword();
+    
+    // Update the school with new password
+    setSchools(prev => prev.map(school => 
+      school.id === schoolId 
+        ? { ...school, adminPassword: newPassword }
+        : school
+    ));
+    
+    toast({
+      title: "Senha resetada!",
+      description: `Nova senha gerada para ${schoolName}: ${newPassword}`,
+    });
+    
+    console.log(`🔄 Password reset for ${schoolName}: ${newPassword}`);
   };
 
   return (
@@ -413,8 +523,18 @@ export const SchoolManagement: React.FC = () => {
                             variant="ghost"
                             onClick={() => copyPassword(school.adminPassword!, school.name)}
                             className="h-6 w-6 p-0"
+                            title="Copiar senha"
                           >
                             <Copy className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => resetSchoolPassword(school.id, school.name)}
+                            className="h-6 w-6 p-0"
+                            title="Reset senha"
+                          >
+                            <RotateCcw className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
