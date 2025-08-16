@@ -19,7 +19,11 @@ const UserHeader: React.FC = () => {
   const pageTitle = getOrganizationTitle(currentOrganization);
   
   // Show franchise dashboard link for super admin
-  const showFranchiseAccess = isSuperAdmin() || currentUser.role === 'franchise_admin';
+  // Temporary: Use admin role + specific email until PostgreSQL migration
+  const showFranchiseAccess = (
+    currentUser.role === 'admin' && 
+    currentUser.email === 'wadevenga@hotmail.com'
+  ) || isSuperAdmin() || currentUser.role === 'franchise_admin';
 
   return (
     <Card className="mb-6 border bg-primary text-primary-foreground dark:bg-slate-800/50 dark:border-slate-700">

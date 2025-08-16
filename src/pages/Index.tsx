@@ -15,7 +15,11 @@ const Index = () => {
   const { currentUser, logout, canAccessUserManagement, isSuperAdmin } = useAuth();
   
   // Check if user can access franchise dashboard
-  const canAccessFranchise = isSuperAdmin() || currentUser?.role === 'franchise_admin';
+  // Temporary: Use admin role + specific email until PostgreSQL migration
+  const canAccessFranchise = (
+    currentUser?.role === 'admin' && 
+    currentUser?.email === 'wadevenga@hotmail.com'
+  ) || isSuperAdmin() || currentUser?.role === 'franchise_admin';
 
   const handleLogout = async () => {
     await logout();
