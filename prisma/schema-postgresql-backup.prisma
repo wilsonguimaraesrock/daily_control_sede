@@ -1,0 +1,197 @@
+// Schema PostgreSQL Multi-Tenant para Daily Control Franqueadora
+// Suporte para 105 escolas + departamentos internos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// MULTI-TENANCY: ORGANIZAÇÕES
+// ================================
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String   // Nome da escola/departamento
+  code        String   @unique // Código único (ex: "ESC001", "PD&I")
+  type        OrganizationType
+  settings    Json     @default("{}") // Configurações customizáveis
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  users       UserProfile[]
+  tasks       Task[]
+  
+  @@map("organizations")
+}
+
+enum OrganizationType {
+  SCHOOL      @map("school")      // Escola da franquia
+  DEPARTMENT  @map("department")  // Departamento interno (PD&I, Comercial, etc)
+  
+  @@map("organization_type")
+}
+
+// ================================
+// USUÁRIOS COM ORGANIZAÇÃO
+// ================================
+
+model UserProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique @map("user_id")
+  organizationId  String    @map("organization_id")
+  name            String
+  email           String    @unique
+  role            Role
+  customPermissions Json    @default("{}") @map("custom_permissions")
+  isActive        Boolean   @default(true) @map("is_active")
+  passwordHash    String?   @map("password_hash")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  lastLogin       DateTime? @map("last_login")
+  firstLoginCompleted Boolean @default(false) @map("first_login_completed")
+  
+  // Relacionamentos
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdTasks   Task[] @relation("TaskCreator")
+  assignedTasks  TaskAssignment[]
+  editHistory    TaskEditHistory[] @relation("TaskEditor")
+  
+  @@map("user_profiles")
+}
+
+// ================================
+// TAREFAS ISOLADAS POR ORGANIZAÇÃO
+// ================================
+
+model Task {
+  id              String     @id @default(cuid())
+  organizationId  String     @map("organization_id")
+  title           String
+  description     String?    @db.Text
+  status          TaskStatus @default(PENDENTE)
+  priority        Priority   @default(MEDIA)
+  dueDate         DateTime?  @map("due_date") @db.Date
+  createdBy       String     @map("created_by")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  completedAt     DateTime?  @map("completed_at")
+  isPrivate       Boolean?   @default(false) @map("is_private")
+  
+  // Relacionamentos
+  organization Organization @relation(fields: [organizationId], references: [id])
+  creator      UserProfile @relation("TaskCreator", fields: [createdBy], references: [userId])
+  assignments  TaskAssignment[]
+  editHistory  TaskEditHistory[]
+  
+  // RLS Policy: Usuários só veem tarefas da sua organização
+  @@map("tasks")
+}
+
+model TaskAssignment {
+  id     String @id @default(cuid())
+  taskId String @map("task_id")
+  userId String @map("user_id")
+  
+  // Relacionamentos
+  task Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user UserProfile @relation(fields: [userId], references: [userId])
+  
+  @@unique([taskId, userId])
+  @@map("task_assignments")
+}
+
+model TaskEditHistory {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  editedBy  String   @map("edited_by")
+  editedAt  DateTime @default(now()) @map("edited_at")
+  changes   Json
+  
+  // Relacionamentos
+  task     Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  editor   UserProfile @relation("TaskEditor", fields: [editedBy], references: [userId])
+  
+  @@map("task_edit_history")
+}
+
+// ================================
+// SISTEMA FLEXÍVEL DE PERMISSÕES
+// ================================
+
+model PasswordReset {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  newPassword String   @map("new_password") // Senha temporária de 6 dígitos
+  createdBy   String   @map("created_by")   // Quem resetou
+  createdAt   DateTime @default(now()) @map("created_at")
+  isUsed      Boolean  @default(false) @map("is_used")
+  
+  @@map("password_resets")
+}
+
+// ================================
+// CONFIGURAÇÕES GLOBAIS
+// ================================
+
+model AvailableMonth {
+  id          String  @id @default(cuid())
+  monthValue  String  @map("month_value")
+  displayName String  @map("display_name")
+  isActive    Boolean @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  @@map("available_months")
+}
+
+// ================================
+// ENUMS ESTENDIDOS
+// ================================
+
+enum Role {
+  // ===== ROLES GLOBAIS =====
+  super_admin           @map("super_admin")           // Você - Acesso total
+  franchise_admin       @map("franchise_admin")       // Admin da franqueadora
+  franchise_analyst     @map("franchise_analyst")     // Analista de indicadores
+  
+  // ===== ROLES PARA ESCOLAS =====
+  admin                 @map("admin")                 // Admin da escola
+  franqueado           @map("franqueado")            // Franqueado da escola
+  gerente_comercial    @map("gerente_comercial")     // Novo: Gerente comercial
+  coordenador          @map("coordenador")           // Coordenador pedagógico
+  supervisor_adm       @map("supervisor_adm")        // Supervisor administrativo
+  assessora_adm        @map("assessora_adm")         // Assessora administrativa
+  vendedor             @map("vendedor")              // Vendedor
+  professor            @map("professor")             // Professor
+  
+  // ===== ROLES PARA DEPARTAMENTOS =====
+  departamento_head     @map("departamento_head")     // Chefe do departamento
+  departamento_manager  @map("departamento_manager")  // Gerente do departamento
+  departamento_analyst  @map("departamento_analyst")  // Analista do departamento
+  departamento_assistant @map("departamento_assistant") // Assistente do departamento
+  
+  @@map("role")
+}
+
+enum TaskStatus {
+  PENDENTE     @map("pendente")
+  EM_ANDAMENTO @map("em_andamento")
+  CONCLUIDA    @map("concluida")
+  CANCELADA    @map("cancelada")
+  
+  @@map("task_status")
+}
+
+enum Priority {
+  BAIXA   @map("baixa")
+  MEDIA   @map("media")
+  ALTA    @map("alta")
+  URGENTE @map("urgente")
+  
+  @@map("priority")
+}

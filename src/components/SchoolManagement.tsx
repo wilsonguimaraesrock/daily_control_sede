@@ -94,92 +94,53 @@ export const SchoolManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      // TEMPORARY: Use mock data until PostgreSQL backend is ready
-      console.log('🔄 Loading mock schools data...');
+      console.log('🔄 Loading real schools data...');
       
-      const mockSchools: SchoolWithAdmin[] = [
-        {
-          id: 'rockfeller-centro-001',
-          name: 'Rockfeller Centro',
-          code: 'RFC001',
-          type: 'SCHOOL',
-          settings: {
-            canEditDueDates: true,
-            allowPrivateTasks: false,
-            branding: { title: 'Daily Control - Rockfeller Centro', logo: '/assets/rockfeller-logo.png' }
-          },
-          isActive: true,
-          createdAt: new Date('2024-02-15'),
-          updatedAt: new Date(),
-          admin: {
-            id: 'admin-rfc001',
-            user_id: 'admin-rfc001',
-            organization_id: 'rockfeller-centro-001',
-            name: 'Admin Rockfeller Centro',
-            email: 'admin.rfc001@rockfeller.edu.br',
-            role: 'admin',
-            is_active: true,
-            created_at: new Date('2024-02-15'),
-            first_login_completed: false
-          },
-          adminPassword: '170834'
-        },
-        {
-          id: 'rockfeller-norte-002',
-          name: 'Rockfeller Norte',
-          code: 'RFC002',
-          type: 'SCHOOL',
-          settings: {
-            canEditDueDates: true,
-            allowPrivateTasks: false,
-            branding: { title: 'Daily Control - Rockfeller Norte', logo: '/assets/rockfeller-logo.png' }
-          },
-          isActive: true,
-          createdAt: new Date('2024-03-01'),
-          updatedAt: new Date(),
-          admin: {
-            id: 'admin-rfc002',
-            user_id: 'admin-rfc002', 
-            organization_id: 'rockfeller-norte-002',
-            name: 'Admin Rockfeller Norte',
-            email: 'admin.rfc002@rockfeller.edu.br',
-            role: 'admin',
-            is_active: true,
-            created_at: new Date('2024-03-01'),
-            first_login_completed: false
-          },
-          adminPassword: '700192'
-        },
-        {
-          id: 'rockfeller-sul-003',
-          name: 'Rockfeller Sul',
-          code: 'RFC003',
-          type: 'SCHOOL',
-          settings: {
-            canEditDueDates: true,
-            allowPrivateTasks: false,
-            branding: { title: 'Daily Control - Rockfeller Sul', logo: '/assets/rockfeller-logo.png' }
-          },
-          isActive: true,
-          createdAt: new Date('2024-03-15'),
-          updatedAt: new Date(),
-          admin: {
-            id: 'admin-rfc003',
-            user_id: 'admin-rfc003',
-            organization_id: 'rockfeller-sul-003',
-            name: 'Admin Rockfeller Sul',
-            email: 'admin.rfc003@rockfeller.edu.br',
-            role: 'admin',
-            is_active: true,
-            created_at: new Date('2024-03-15'),
-            first_login_completed: false
-          },
-          adminPassword: '846934'
+      // Load organizations from real API
+      const orgs = await getOrganizations();
+      const schoolsOnly = orgs.filter(org => org.type === 'SCHOOL');
+      
+      // Load admin users and password resets for each school
+      const schoolsWithAdmins: SchoolWithAdmin[] = [];
+      
+      for (const school of schoolsOnly) {
+        try {
+          // Load admin users for this school
+          const schoolUsers = await getUsersInOrganization(school.id);
+          const admin = schoolUsers.find(user => user.role === 'admin');
+          
+          // TODO: Load password resets from API when available
+          // For now, use the fixed passwords we created
+          let adminPassword: string | undefined;
+          if (admin) {
+            // Map known passwords (these are the ones we created)
+            const passwordMap: Record<string, string> = {
+              'admin.rfc001@rockfeller.edu.br': '170834',
+              'admin.rfc002@rockfeller.edu.br': '700192',
+              'admin.rfc003@rockfeller.edu.br': '846934'
+            };
+            adminPassword = passwordMap[admin.email];
+          }
+          
+          schoolsWithAdmins.push({
+            ...school,
+            admin,
+            adminPassword
+          });
+          
+        } catch (error) {
+          console.error(`Error loading data for school ${school.name}:`, error);
+          // Add school without admin data if there's an error
+          schoolsWithAdmins.push({
+            ...school,
+            admin: undefined,
+            adminPassword: undefined
+          });
         }
-      ];
+      }
       
-      setSchools(mockSchools);
-      console.log('✅ Mock schools loaded successfully');
+      setSchools(schoolsWithAdmins);
+      console.log(`✅ Real schools loaded: ${schoolsWithAdmins.length} schools`);
       
     } catch (error) {
       console.error('Error loading schools:', error);
@@ -262,36 +223,27 @@ export const SchoolManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      // TEMPORARY: Simulate school creation with mock data
-      console.log('🔄 Creating school with mock data...');
+      console.log('🔄 Creating school with real API...');
       
-      // Generate 6-digit password
-      const randomPassword = generateRandomPassword();
-      
-      // Create mock organization
-      const newOrganization: Organization = {
-        id: `school-${Date.now()}`,
+      // Create organization using real API
+      const organization = await createOrganization({
         name: formData.name,
         code: formData.code,
         type: 'SCHOOL',
-        settings: formData.settings,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+        settings: formData.settings
+      });
 
-      // Create mock admin user
-      const adminUser: User = {
-        id: `admin-${Date.now()}`,
-        user_id: `admin-${formData.code.toLowerCase()}`,
-        organization_id: newOrganization.id,
+      // Create admin user using real API
+      const adminUser = await createUserInOrganization({
         name: formData.adminName,
         email: formData.adminEmail,
         role: 'admin',
         is_active: true,
-        created_at: new Date(),
         first_login_completed: false
-      };
+      }, organization.id);
+
+      // Generate temporary password using real API
+      const passwordReset = await generateTemporaryPassword(adminUser.user_id);
 
       toast({
         title: "Escola criada com sucesso!",
@@ -300,9 +252,9 @@ export const SchoolManagement: React.FC = () => {
 
       // Show password in a separate dialog
       const newSchool: SchoolWithAdmin = {
-        ...newOrganization,
+        ...organization,
         admin: adminUser,
-        adminPassword: randomPassword
+        adminPassword: passwordReset.newPassword
       };
 
       setSchools(prev => [...prev, newSchool]);
@@ -310,7 +262,7 @@ export const SchoolManagement: React.FC = () => {
       setIsCreateDialogOpen(false);
       resetForm();
       
-      console.log(`✅ School created: ${formData.name} - Password: ${randomPassword}`);
+      console.log(`✅ School created: ${formData.name} - Password: ${passwordReset.newPassword}`);
       
     } catch (error) {
       console.error('Error creating school:', error);
@@ -336,23 +288,42 @@ export const SchoolManagement: React.FC = () => {
     setShowPassword(showPassword === schoolId ? '' : schoolId);
   };
 
-  const resetSchoolPassword = (schoolId: string, schoolName: string) => {
-    // Generate new 6-digit password
-    const newPassword = generateRandomPassword();
-    
-    // Update the school with new password
-    setSchools(prev => prev.map(school => 
-      school.id === schoolId 
-        ? { ...school, adminPassword: newPassword }
-        : school
-    ));
-    
-    toast({
-      title: "Senha resetada!",
-      description: `Nova senha gerada para ${schoolName}: ${newPassword}`,
-    });
-    
-    console.log(`🔄 Password reset for ${schoolName}: ${newPassword}`);
+  const resetSchoolPassword = async (schoolId: string, schoolName: string) => {
+    try {
+      const school = schools.find(s => s.id === schoolId);
+      if (!school?.admin) {
+        toast({
+          title: "Erro",
+          description: "Admin não encontrado para esta escola",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Generate new password using real API
+      const passwordReset = await resetUserPassword(school.admin.user_id);
+      
+      // Update the school with new password in UI
+      setSchools(prev => prev.map(s => 
+        s.id === schoolId 
+          ? { ...s, adminPassword: passwordReset.newPassword }
+          : s
+      ));
+      
+      toast({
+        title: "Senha resetada!",
+        description: `Nova senha gerada para ${schoolName}: ${passwordReset.newPassword}`,
+      });
+      
+      console.log(`🔄 Password reset for ${schoolName}: ${passwordReset.newPassword}`);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao resetar senha",
+        variant: "destructive"
+      });
+    }
   };
 
   return (

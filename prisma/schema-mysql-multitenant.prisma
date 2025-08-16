@@ -58,7 +58,6 @@ model UserProfile {
   organization          Organization? @relation(fields: [organizationId], references: [id])
   createdTasks          Task[] @relation("TaskCreator")
   assignedTasks         TaskAssignment[]
-  passwordResets        PasswordReset[] @relation("UserPasswordResets")
   createdPasswordResets PasswordReset[] @relation("PasswordResetCreator")
   
   @@map("user_profiles")
@@ -130,7 +129,7 @@ model PasswordReset {
   isUsed         Boolean      @default(false) @map("is_used")
   
   // Relacionamentos
-  user           UserProfile  @relation("UserPasswordResets", fields: [userId], references: [userId])
+  user           UserProfile  @relation(fields: [userId], references: [userId])
   creator        UserProfile  @relation("PasswordResetCreator", fields: [createdBy], references: [userId])
   organization   Organization @relation("OrganizationPasswordResets", fields: [organizationId], references: [id])
   organizationId String       @map("organization_id")
