@@ -24,7 +24,7 @@ import {
   Eye, 
   EyeOff,
   Copy, 
-  User,
+  User as UserIcon,
   Key,
   CheckCircle,
   AlertCircle,
@@ -383,7 +383,7 @@ export const SchoolManagement: React.FC = () => {
               {school.admin && (
                 <div className="p-3 bg-muted rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <User className="h-4 w-4" />
+                    <UserIcon className="h-4 w-4" />
                     <span className="text-sm font-medium">Administrador</span>
                   </div>
                   <div className="text-sm">
