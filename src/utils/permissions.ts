@@ -8,7 +8,12 @@ import { UserRole, UserPermissions, User, Organization } from '../types/user';
  * Gera senha aleatória de 6 dígitos
  */
 export function generateRandomPassword(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate secure 6-digit password using crypto
+  const min = 100000;
+  const max = 999999;
+  const randomArray = new Uint32Array(1);
+  crypto.getRandomValues(randomArray);
+  return (min + (randomArray[0] % (max - min + 1))).toString();
 }
 
 /**

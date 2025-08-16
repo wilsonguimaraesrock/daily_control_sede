@@ -50,8 +50,6 @@ const LoginForm: React.FC = () => {
         <CardHeader className="text-center py-3">
           {/* LOGO DA ROCKFELLER - Tamanho XL (300% maior) */}
           <Logo size="xl" variant="icon" className="mx-auto mb-2" />
-          <CardTitle className="text-foreground text-base mb-1">{APP_NAME}</CardTitle>
-          <p className="text-muted-foreground text-sm">Acesse sua conta</p>
         </CardHeader>
         
         <CardContent className="py-3">

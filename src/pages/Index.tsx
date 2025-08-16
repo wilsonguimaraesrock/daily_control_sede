@@ -9,10 +9,11 @@ import TaskManager from '@/components/TaskManager';
 import UserHeader from '@/components/UserHeader';
 import NotificationTestPanel from '@/components/NotificationTestPanel';
 import { FranchiseAdminDashboard } from '@/components/FranchiseAdminDashboard';
+import { OrganizationSelector } from '@/components/OrganizationSelector';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('tasks');
-  const { currentUser, logout, canAccessUserManagement, isSuperAdmin } = useAuth();
+  const { currentUser, logout, canAccessUserManagement, isSuperAdmin, canSwitchOrganization } = useAuth();
   
   // Check if user can access franchise dashboard
   // Temporary: Use admin role + specific email until PostgreSQL migration
@@ -34,13 +35,20 @@ const Index = () => {
       <div className="container mx-auto px-4 py-6">
         <UserHeader />
         
-        <div className="mb-6" />
+        {/* Organization Selector - Fora da barra azul */}
+        {canSwitchOrganization() && (
+          <Card className="mb-6 bg-card border border-border">
+            <CardContent className="p-4">
+              <OrganizationSelector className="justify-center sm:justify-start" />
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className={`grid w-full ${
             canAccessFranchise && canAccessUserManagement() ? 'grid-cols-4' :
             canAccessFranchise || canAccessUserManagement() ? 'grid-cols-3' : 'grid-cols-2'
-          } bg-muted border border-border`}>
+          } bg-card border border-border shadow-sm`}>
             <TabsTrigger 
               value="tasks" 
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"

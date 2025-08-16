@@ -34,6 +34,7 @@ interface AuthContextType {
   getOrganizations: () => Promise<Organization[]>;
   createOrganization: (orgData: Partial<Organization>) => Promise<Organization>;
   updateOrganization: (orgId: string, orgData: Partial<Organization>) => Promise<Organization>;
+  deleteOrganization: (orgId: string) => Promise<{ message: string; deletedOrganization: any }>;
   
   // Enhanced User Management
   createUserInOrganization: (userData: Partial<User>, organizationId?: string) => Promise<User>;
@@ -404,6 +405,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.json();
   };
 
+  const deleteOrganization = async (orgId: string): Promise<{ message: string; deletedOrganization: any }> => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations/${orgId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Organization deletion failed');
+    }
+
+    return response.json();
+  };
+
   // ========================================
   // PERMISSION HELPERS
   // ========================================
@@ -469,6 +490,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getOrganizations,
     createOrganization,
     updateOrganization,
+    deleteOrganization,
     
     // Enhanced user management
     createUserInOrganization,

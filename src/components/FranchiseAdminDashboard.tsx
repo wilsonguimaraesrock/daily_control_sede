@@ -104,15 +104,27 @@ export const FranchiseAdminDashboard: React.FC = () => {
       
       setRecentUsers(recentUsersList);
       
-      // Calculate real stats (mock task stats for now)
+      // Load real statistics from API
+      const statsResponse = await fetch('/api/stats/organizations', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!statsResponse.ok) {
+        throw new Error('Failed to load statistics');
+      }
+
+      const statsData = await statsResponse.json();
+      
       const realStats: FranchiseStats = {
-        totalSchools: schools.length,
-        totalUsers,
-        activeTasks: Math.floor(Math.random() * 200) + 50, // TODO: Load from tasks API
-        completedTasks: Math.floor(Math.random() * 500) + 100, // TODO: Load from tasks API
-        overdueTasks: Math.floor(Math.random() * 20) + 5, // TODO: Load from tasks API
-        completionRate: Math.floor(Math.random() * 30) + 70, // TODO: Calculate from tasks
-        schoolsWithIssues: Math.floor(Math.random() * 3) // TODO: Calculate from real data
+        totalSchools: statsData.global.totalSchools,
+        totalUsers: statsData.global.totalUsers,
+        activeTasks: statsData.global.activeTasks,
+        completedTasks: statsData.global.completedTasks,
+        overdueTasks: statsData.global.overdueTasks,
+        completionRate: statsData.global.completionRate,
+        schoolsWithIssues: statsData.global.schoolsWithIssues
       };
       
       setStats(realStats);
@@ -138,11 +150,8 @@ export const FranchiseAdminDashboard: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            🏢 Administração Franqueadora
+            Administração Franqueadora
           </h1>
-          <p className="text-muted-foreground">
-            Painel de controle centralizado para gerenciar todas as escolas Rockfeller
-          </p>
         </div>
         
         <div className="flex items-center gap-3">

@@ -3,6 +3,7 @@ const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -58,7 +59,12 @@ const addOrganizationContext = async (req, res, next) => {
 
 // Generate random 6-digit password
 function generateRandomPassword() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate secure 6-digit password using crypto
+  const min = 100000;
+  const max = 999999;
+  const randomArray = new Uint32Array(1);
+  crypto.getRandomValues(randomArray);
+  return (min + (randomArray[0] % (max - min + 1))).toString();
 }
 
 // Check if user can access organization
@@ -78,7 +84,7 @@ function canAccessOrganization(user, organizationId) {
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    database: 'connected', 
+    database: 'connected',
     timestamp: new Date().toISOString(),
     multiTenant: true
   });
@@ -126,7 +132,7 @@ app.post('/api/auth/login', async (req, res) => {
     }, JWT_SECRET, { expiresIn: '24h' });
 
     console.log(`✅ Login successful: ${email} (${user.role})`);
-
+    
     res.json({
       user: {
         id: user.id,
@@ -259,7 +265,7 @@ app.post('/api/users', authenticateToken, async (req, res) => {
 
     const user = await prisma.userProfile.create({
       data: {
-        userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: `user_${Date.now()}_${crypto.randomUUID().substring(0, 8)}`,
         organizationId: targetOrgId,
         name,
         email,
@@ -272,14 +278,16 @@ app.post('/api/users', authenticateToken, async (req, res) => {
       }
     });
 
-    // Create password reset record
-    await prisma.passwordReset.create({
-      data: {
-        userId: user.userId,
-        newPassword: tempPassword,
-        createdBy: req.user.userId
-      }
-    });
+    // Create password reset record (simplified)
+    try {
+      await prisma.$executeRaw`
+        INSERT INTO password_resets (id, user_id, new_password, created_by, created_at, is_used)
+        VALUES (${crypto.randomUUID()}, ${user.userId}, ${tempPassword}, ${req.user.userId}, NOW(), false)
+      `;
+    } catch (resetError) {
+      console.log('Warning: Could not create password reset record:', resetError.message);
+      // Continue anyway, user creation is more important
+    }
 
     console.log(`👤 User created: ${email} - Temp password: ${tempPassword}`);
 
@@ -357,6 +365,67 @@ app.post('/api/users/:userId/reset-password', authenticateToken, async (req, res
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// Delete user
+app.delete('/api/users/:userId', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find user first to check organization access and get info
+    const existingUser = await prisma.userProfile.findUnique({
+      where: { id: userId },
+      include: { organization: true }
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check permissions
+    if (!canAccessOrganization(req.user, existingUser.organizationId)) {
+      return res.status(403).json({ error: 'Access denied to user organization' });
+    }
+
+    // Prevent deleting yourself
+    if (existingUser.id === req.user.id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    // Prevent deleting super admin (safety check)
+    if (existingUser.role === 'super_admin') {
+      return res.status(400).json({ error: 'Cannot delete super admin account' });
+    }
+
+    // Delete related password resets first
+    try {
+      await prisma.$executeRaw`
+        DELETE FROM password_resets WHERE user_id = ${existingUser.userId}
+      `;
+    } catch (resetError) {
+      console.log('Warning: Could not delete password resets:', resetError.message);
+    }
+
+    // Delete the user
+    await prisma.userProfile.delete({
+      where: { id: userId }
+    });
+
+    console.log(`🗑️ User deleted: ${existingUser.name} (${existingUser.email}) by ${req.user.email}`);
+
+    res.json({ 
+      message: 'User deleted successfully',
+      deletedUser: {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        organization: existingUser.organization?.name
+      }
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
   }
 });
 
@@ -458,6 +527,124 @@ app.get('/api/organizations/:orgId/users', authenticateToken, async (req, res) =
   }
 });
 
+// Get admin password for school (super admin only)
+app.get('/api/organizations/:orgId/admin-password', authenticateToken, async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    // Only super admin and franchise admin can access passwords
+    if (req.user.role !== 'super_admin' && req.user.role !== 'franchise_admin') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    // Find admin user for this organization
+    const admin = await prisma.userProfile.findFirst({
+      where: { 
+        organizationId: orgId,
+        role: 'admin'
+      }
+    });
+
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found for this organization' });
+    }
+
+    // Get latest password reset for this admin
+    const passwordReset = await prisma.$queryRaw`
+      SELECT new_password, created_at, is_used
+      FROM password_resets
+      WHERE user_id = ${admin.userId}
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+
+    if (passwordReset.length > 0) {
+      res.json({
+        adminEmail: admin.email,
+        adminName: admin.name,
+        temporaryPassword: passwordReset[0].new_password,
+        passwordCreated: passwordReset[0].created_at,
+        isUsed: passwordReset[0].is_used
+      });
+    } else {
+      res.status(404).json({ error: 'No password found for admin' });
+    }
+
+  } catch (error) {
+    console.error('Get admin password error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE Organization
+app.delete('/api/organizations/:orgId', authenticateToken, async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    // Only super admin and franchise admin can delete organizations
+    if (req.user.role !== 'super_admin' && req.user.role !== 'franchise_admin') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    // Check if organization exists
+    const organization = await prisma.organization.findUnique({
+      where: { id: orgId },
+      include: {
+        users: true,
+        tasks: true
+      }
+    });
+
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    // Prevent deletion of PD&I Tech (main organization)
+    if (organization.code === 'PDI001' || organization.id === 'pdi-tech-001') {
+      return res.status(400).json({ error: 'Cannot delete main organization' });
+    }
+
+    // Delete all related data in transaction
+    await prisma.$transaction(async (tx) => {
+      // Delete user profiles (this will cascade to password resets if FK is set)
+      await tx.userProfile.deleteMany({
+        where: { organizationId: orgId }
+      });
+
+      // Delete tasks
+      await tx.task.deleteMany({
+        where: { organizationId: orgId }
+      });
+
+      // Delete organization
+      await tx.organization.delete({
+        where: { id: orgId }
+      });
+    });
+
+    console.log(`🗑️ Organization deleted: ${organization.name} (${organization.code}) by ${req.user.email}`);
+
+    res.json({ 
+      message: 'Organization deleted successfully', 
+      deletedOrganization: {
+        id: organization.id,
+        name: organization.name,
+        code: organization.code,
+        usersDeleted: organization.users.length,
+        tasksDeleted: organization.tasks.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Delete organization error:', error);
+    console.error('Error details:', error.message, error.code);
+    res.status(500).json({ 
+      error: 'Failed to delete organization',
+      details: error.message 
+    });
+  }
+});
+
 // ================================
 // TASK ROUTES (Multi-tenant)
 // ================================
@@ -500,6 +687,170 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
 });
 
 // ================================
+// TASK STATISTICS (Multi-tenant)
+// ================================
+
+app.get('/api/stats/tasks', authenticateToken, async (req, res) => {
+  try {
+    let whereClause = {};
+
+    // Super admin can filter by organization, others only see their org
+    if (req.user.role === 'super_admin' || req.user.role === 'franchise_admin') {
+      const { organization_id } = req.query;
+      if (organization_id && organization_id !== 'all') {
+        whereClause.organizationId = organization_id;
+      }
+    } else {
+      whereClause.organizationId = req.user.organization_id;
+    }
+
+    // Get task statistics
+    const [
+      totalTasks,
+      activeTasks,
+      completedTasks,
+      overdueTasks
+    ] = await Promise.all([
+      prisma.task.count({ where: whereClause }),
+      prisma.task.count({ 
+        where: { 
+          ...whereClause, 
+          status: { in: ['pendente', 'em_andamento'] } 
+        } 
+      }),
+      prisma.task.count({ 
+        where: { 
+          ...whereClause, 
+          status: 'concluida' 
+        } 
+      }),
+      prisma.task.count({ 
+        where: { 
+          ...whereClause, 
+          dueDate: { lt: new Date() },
+          status: { not: 'concluida' }
+        } 
+      })
+    ]);
+
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    const stats = {
+      totalTasks,
+      activeTasks,
+      completedTasks,
+      overdueTasks,
+      completionRate
+    };
+
+    console.log(`📊 Task stats retrieved for ${req.user.email}: ${JSON.stringify(stats)}`);
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Get task stats error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/stats/organizations', authenticateToken, async (req, res) => {
+  try {
+    // Only super admin and franchise admin can access global stats
+    if (req.user.role !== 'super_admin' && req.user.role !== 'franchise_admin') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    console.log('📊 Starting stats query...');
+
+    // Get basic organizations
+    const organizations = await prisma.organization.findMany({
+      where: { isActive: true }
+    });
+
+    console.log(`📊 Found ${organizations.length} organizations`);
+
+    // Get user counts for each org
+    const orgStats = await Promise.all(
+      organizations.map(async (org) => {
+        const userCount = await prisma.userProfile.count({
+          where: { 
+            organizationId: org.id,
+            isActive: true
+          }
+        });
+
+        const totalTasks = await prisma.task.count({
+          where: { organizationId: org.id }
+        });
+
+        const activeTasks = await prisma.task.count({
+          where: { 
+            organizationId: org.id,
+            status: { in: ['PENDENTE', 'EM_ANDAMENTO'] } 
+          }
+        });
+
+        const completedTasks = await prisma.task.count({
+          where: { 
+            organizationId: org.id,
+            status: 'CONCLUIDA' 
+          }
+        });
+
+        const overdueTasks = 0; // Simplified for now
+
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        return {
+          organization: {
+            id: org.id,
+            name: org.name,
+            code: org.code,
+            type: org.type
+          },
+          userCount,
+          taskStats: {
+            total: totalTasks,
+            active: activeTasks,
+            completed: completedTasks,
+            overdue: overdueTasks,
+            completionRate
+          }
+        };
+      })
+    );
+
+    // Calculate global statistics
+    const globalStats = {
+      totalSchools: organizations.filter(org => org.type === 'SCHOOL').length,
+      totalDepartments: organizations.filter(org => org.type === 'DEPARTMENT').length,
+      totalUsers: orgStats.reduce((sum, org) => sum + org.userCount, 0),
+      totalTasks: orgStats.reduce((sum, org) => sum + org.taskStats.total, 0),
+      activeTasks: orgStats.reduce((sum, org) => sum + org.taskStats.active, 0),
+      completedTasks: orgStats.reduce((sum, org) => sum + org.taskStats.completed, 0),
+      overdueTasks: orgStats.reduce((sum, org) => sum + org.taskStats.overdue, 0),
+      schoolsWithIssues: 0 // Simplified for now
+    };
+
+    globalStats.completionRate = globalStats.totalTasks > 0 
+      ? Math.round((globalStats.completedTasks / globalStats.totalTasks) * 100) 
+      : 0;
+
+    const response = {
+      global: globalStats,
+      organizations: orgStats
+    };
+
+    console.log(`🌍 Global stats retrieved for ${req.user.email}`);
+
+    res.json(response);
+  } catch (error) {
+    console.error('Get organization stats error:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ error: 'Internal server error', details: error.message });
+  }
+});
+
+// ================================
 // SERVER STARTUP
 // ================================
 
@@ -507,9 +858,9 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
 process.on('SIGINT', async () => {
   console.log('🛑 Shutting down gracefully...');
   await prisma.$disconnect();
-  console.log('✅ Server closed');
-  process.exit(0);
-});
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 
 app.listen(PORT, () => {
   console.log(`🚀 Daily Control Multi-Tenant API Server running on port ${PORT}`);

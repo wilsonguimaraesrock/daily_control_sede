@@ -30,7 +30,7 @@ const NotificationTestPanel: React.FC = () => {
       title: notification.title,
       message: notification.message,
       type: notification.type,
-      taskId: 'test-' + Math.random()
+              taskId: 'test-' + crypto.randomUUID().substring(0, 8)
     });
   };
 

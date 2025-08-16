@@ -31,30 +31,33 @@ const Logo: React.FC<LogoProps> = ({
   // Usando logo da pasta public (mais confiável)
   const rockfellerLogoUrl = '/rockfeller-logo.png';
 
-  // ✅ LOGO REAL DA ROCKFELLER IMPLEMENTADA! [300% MAIOR]
+  // ✅ LOGO DO LOGIN - APENAS PARA TAMANHO XL (tela de login)
+  if (variant === 'icon' && size === 'xl') {
+    return (
+      <div className={`${sizeClasses[size]} ${className}`} data-logo="daily-control-login">
+        <div className="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 rounded-xl flex flex-col items-center justify-center shadow-lg border border-blue-500/20">
+          <div className="text-white font-black tracking-tight text-center px-2">
+            <div className="text-yellow-300 text-3xl leading-tight font-black">Daily</div>
+            <div className="text-white text-2xl leading-tight font-black">Control</div>
+          </div>
+          <img 
+            src="/rockfeller-logo.png" 
+            alt="Rockfeller" 
+            className="w-24 h-24 mt-2 object-contain opacity-80"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ LOGO PADRÃO - APENAS IMAGEM DA ROCKFELLER
   if (variant === 'icon' || variant === 'full') {
     return (
-      <div className={`${sizeClasses[size]} ${className}`} data-logo="rockfeller-public-300">
+      <div className={`${sizeClasses[size]} ${className}`} data-logo="rockfeller-only">
         <img 
-          src={rockfellerLogoUrl} 
+          src="/rockfeller-logo.png" 
           alt="Rockfeller Logo" 
           className="w-full h-full object-contain"
-          onError={(e) => {
-            // Fallback for logo loading error
-            // Fallback para o design anterior se a imagem não carregar
-            (e.target as HTMLImageElement).style.display = 'none';
-            (e.target as HTMLImageElement).parentElement!.innerHTML = `
-              <div class="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg border border-blue-500/20">
-                <div class="text-white font-bold tracking-tight">
-                  <span class="text-yellow-300 text-2xl">R</span>
-                  <span class="text-white text-lg">F</span>
-                </div>
-              </div>
-            `;
-          }}
-          onLoad={() => {
-            // Logo loaded successfully
-          }}
         />
       </div>
     );
@@ -76,15 +79,11 @@ const Logo: React.FC<LogoProps> = ({
           alt="Rockfeller Logo" 
           className="w-full h-full object-contain"
           onError={(e) => {
-            // Fallback for logo loading error
-            // Fallback para o design anterior se a imagem não carregar
+            // Fallback: mostrar um placeholder simples sem texto "Daily Control"
             (e.target as HTMLImageElement).style.display = 'none';
             (e.target as HTMLImageElement).parentElement!.innerHTML = `
-              <div class="w-full h-full bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg border border-blue-500/20">
-                <div class="text-white font-bold tracking-tight">
-                  <span class="text-yellow-300 text-2xl">R</span>
-                  <span class="text-white text-lg">F</span>
-                </div>
+              <div class="w-full h-full bg-gray-200 rounded-xl flex items-center justify-center">
+                <div class="text-gray-500 text-sm">Logo</div>
               </div>
             `;
           }}

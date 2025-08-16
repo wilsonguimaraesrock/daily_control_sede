@@ -97,12 +97,7 @@ const UserHeader: React.FC = () => {
             </div>
           </div>
           
-          {/* Organization Selector Row */}
-          {canSwitchOrganization() && (
-            <div className="border-t border-white/20 pt-4">
-              <OrganizationSelector className="justify-center sm:justify-start" />
-            </div>
-          )}
+
         </div>
       </CardContent>
     </Card>

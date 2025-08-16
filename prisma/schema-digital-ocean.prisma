@@ -1,0 +1,164 @@
+// Schema PostgreSQL para Digital Ocean - Daily Control Multi-Tenant
+// Migração do MySQL para PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// MULTI-TENANCY: ORGANIZAÇÕES
+// ================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  type      OrganizationType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  users         UserProfile[]
+  tasks         Task[]
+  passwordResets PasswordReset[]
+
+  @@map("organizations")
+}
+
+enum OrganizationType {
+  DEPARTMENT  // Departamentos da franqueadora (PD&I, Comercial, etc.)
+  SCHOOL      // Escolas Rockfeller
+
+  @@map("organization_types")
+}
+
+// ================================
+// USUÁRIOS MULTI-TENANT
+// ================================
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      Role
+  isActive  Boolean  @default(true)
+  
+  // Multi-tenant
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Controle de primeiro login
+  firstLoginCompleted Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  assignedTasks Task[] @relation("TaskAssignee")
+  createdTasks  Task[] @relation("TaskCreator")
+  passwordResets PasswordReset[]
+
+  @@map("user_profiles")
+}
+
+enum Role {
+  // Roles Globais (Franqueadora)
+  super_admin
+  franchise_admin
+  
+  // Roles de Departamentos (Franqueadora)
+  coordenador_pdi
+  analista_pdi
+  coordenador_comercial
+  analista_comercial
+  coordenador_mkt
+  analista_mkt
+  coordenador_pedagogico
+  analista_pedagogico
+  
+  // Roles de Escolas
+  franqueado
+  gerente
+  gerente_comercial
+  coordenador
+  supervisor
+  professor
+  assessor
+
+  @@map("roles")
+}
+
+// ================================
+// TAREFAS MULTI-TENANT
+// ================================
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?    @db.Text
+  dueDate     DateTime
+  status      TaskStatus @default(PENDING)
+  priority    Priority   @default(MEDIUM)
+  
+  // Multi-tenant
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  // Relacionamentos
+  assigneeId String?
+  assignee   UserProfile? @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  
+  createdById String
+  createdBy   UserProfile @relation("TaskCreator", fields: [createdById], references: [id])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+
+  @@map("task_statuses")
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+
+  @@map("priorities")
+}
+
+// ================================
+// GESTÃO DE SENHAS
+// ================================
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  
+  // Multi-tenant
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  userId String
+  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  temporaryPassword String
+  isUsed            Boolean  @default(false)
+  expiresAt         DateTime
+  
+  createdAt DateTime @default(now())
+
+  @@map("password_resets")
+}
