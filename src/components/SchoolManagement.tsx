@@ -159,7 +159,8 @@ export const SchoolManagement: React.FC = () => {
           let adminPassword: string | undefined = '145430'; // Default for Navegantes
           if (admin) {
             try {
-              const passwordResponse = await fetch(`http://localhost:3001/api/organizations/${school.id}/admin-password`, {
+              const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      const passwordResponse = await fetch(`${API_BASE_URL}/api/organizations/${school.id}/admin-password`, {
                 headers: {
                   'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
                 }
@@ -178,7 +179,7 @@ export const SchoolManagement: React.FC = () => {
           // Load real statistics for this school
           let stats = { totalUsers: 0, activeTasks: 0, completedTasks: 0, overdueTasks: 0 };
           try {
-            const statsResponse = await fetch(`http://localhost:3001/api/stats/tasks?organization_id=${school.id}`, {
+            const statsResponse = await fetch(`${API_BASE_URL}/api/stats/tasks?organization_id=${school.id}`, {
               headers: {
                 'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
               }

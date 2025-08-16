@@ -5,6 +5,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Organization, User } from '../types/user';
 
+// Configuração da API base URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+
 interface OrganizationContextType {
   currentOrganization: Organization | null;
   availableOrganizations: Organization[];
@@ -41,7 +44,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
       setLoading(true);
       const token = localStorage.getItem('auth_token');
       
-      const response = await fetch('http://localhost:3001/api/organizations', {
+      const response = await fetch(`${API_BASE_URL}/api/organizations`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -77,7 +80,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
       setLoading(true);
       const token = localStorage.getItem('auth_token');
       
-      const response = await fetch('http://localhost:3001/api/organizations/switch', {
+      const response = await fetch(`${API_BASE_URL}/api/organizations/switch`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

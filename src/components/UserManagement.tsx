@@ -55,7 +55,8 @@ const UserManagement: React.FC = () => {
         throw new Error('Token de autenticação não encontrado');
       }
 
-      const response = await fetch('http://localhost:3001/api/users', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    const response = await fetch(`${API_BASE_URL}/api/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
