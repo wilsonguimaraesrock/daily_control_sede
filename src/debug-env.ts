@@ -9,8 +9,17 @@ export const debugEnvironment = () => {
   console.log('MODE:', import.meta.env.MODE);
   console.log('All env vars:', import.meta.env);
   
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-  console.log('📡 API_BASE_URL being used:', API_BASE_URL);
+  // Use same auto-detection logic as useAuth
+  const getApiBaseUrl = () => {
+    if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+    if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+      return window.location.origin;
+    }
+    return 'http://localhost:3001';
+  };
+  
+  const API_BASE_URL = getApiBaseUrl();
+  console.log('📡 API_BASE_URL being used (corrected):', API_BASE_URL);
   
   return API_BASE_URL;
 };

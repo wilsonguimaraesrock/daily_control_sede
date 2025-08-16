@@ -27,6 +27,16 @@ import {
   Shield
 } from 'lucide-react';
 
+// API Base URL - Auto-detection for Vercel production
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return window.location.origin;
+  }
+  return 'http://localhost:3001';
+};
+const API_BASE_URL = getApiBaseUrl();
+
 interface FranchiseStats {
   totalSchools: number;
   totalUsers: number;
@@ -105,7 +115,7 @@ export const FranchiseAdminDashboard: React.FC = () => {
       setRecentUsers(recentUsersList);
       
       // Load real statistics from API
-      const statsResponse = await fetch('/api/stats/organizations', {
+      const statsResponse = await fetch(`${API_BASE_URL}/api/stats/organizations`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
