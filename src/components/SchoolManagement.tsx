@@ -1,6 +1,34 @@
-// ================================
-// GERENCIAMENTO DE ESCOLAS DA FRANQUEADORA
-// ================================
+/**
+ * ===================================================================
+ * GERENCIAMENTO AVANÇADO DE ESCOLAS - FRANQUEADORA ROCKFELLER
+ * ===================================================================
+ * 
+ * Componente responsável pela gestão completa de escolas no sistema
+ * multi-tenant. Permite ao franqueador e super admins gerenciar
+ * todas as 105+ escolas da rede Rockfeller.
+ * 
+ * Funcionalidades implementadas:
+ * - ✅ Criação de escolas com admin automático
+ * - ✅ Visualização de informações detalhadas
+ * - ✅ Configuração de parâmetros por escola
+ * - ✅ Exclusão segura com validações
+ * - ✅ Gestão de credenciais de admin
+ * - ✅ Senhas temporárias com botão de reset
+ * - ✅ Estatísticas em tempo real (usuários/tarefas)
+ * - ✅ Cards colapsáveis ordenados alfabeticamente
+ * - ✅ Interface responsiva mobile/desktop
+ * 
+ * Segurança:
+ * - Validação de permissões por role
+ * - Isolamento de dados por organização
+ * - Senhas criptografadas com bcrypt
+ * - Logs de atividade para auditoria
+ * 
+ * @author Wade Venga
+ * @version 2.0.0
+ * @updated August 2024
+ * ===================================================================
+ */
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';

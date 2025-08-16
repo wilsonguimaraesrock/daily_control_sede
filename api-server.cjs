@@ -1,3 +1,30 @@
+/**
+ * ===================================================================
+ * DAILY CONTROL - MULTI-TENANT API SERVER
+ * ===================================================================
+ * 
+ * Sistema de gerenciamento de tarefas multi-tenant para Rede Rockfeller
+ * 
+ * Funcionalidades:
+ * - ✅ Multi-tenancy: Suporte para 105+ escolas independentes
+ * - ✅ Franqueadora Dashboard: Gestão centralizada
+ * - ✅ Autenticação JWT: Sistema de login seguro
+ * - ✅ Role-Based Access: 12+ níveis de acesso
+ * - ✅ Password Management: Senhas temporárias automáticas
+ * - ✅ Organization Isolation: Dados isolados por escola
+ * 
+ * Infraestrutura:
+ * - Database: MySQL 8.0+ (Digital Ocean Managed Database)
+ * - ORM: Prisma 5.0+
+ * - Auth: JWT + bcrypt
+ * - Deploy: Vercel (Frontend) + Digital Ocean (Database)
+ * 
+ * @version 2.0.0
+ * @author Wade Venga
+ * @updated August 2024
+ * ===================================================================
+ */
+
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -5,22 +32,49 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
+// ===================================================================
+// CONFIGURAÇÃO DO SERVIDOR
+// ===================================================================
+
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
-// ================================
-// MIDDLEWARE
-// ================================
+// ===================================================================
+// MIDDLEWARE DE SEGURANÇA E CONFIGURAÇÃO
+// ===================================================================
 
+// CORS: Permite acesso de múltiplas origens para desenvolvimento e produção
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000', 'http://localhost:8081', 'http://localhost:8080'],
+  origin: [
+    'http://localhost:5173',  // Vite dev server
+    'http://localhost:4173',  // Vite preview
+    'http://localhost:3000',  // React dev server
+    'http://localhost:8081',  // Alternative dev server
+    'http://localhost:8080'   // Alternative dev server
+  ],
   credentials: true
 }));
+
+// Parser JSON para requests
 app.use(express.json());
 
-// Auth middleware
+/**
+ * MIDDLEWARE DE AUTENTICAÇÃO JWT
+ * 
+ * Valida tokens JWT em todas as rotas protegidas.
+ * Adiciona informações do usuário em req.user para uso nas rotas.
+ * 
+ * Headers esperados:
+ * Authorization: Bearer <jwt_token>
+ * 
+ * req.user contém:
+ * - id: ID do usuário
+ * - email: Email do usuário
+ * - role: Papel do usuário (super_admin, franqueado, etc.)
+ * - organization_id: ID da organização do usuário
+ */
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -38,7 +92,17 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Organization context middleware
+/**
+ * MIDDLEWARE DE CONTEXTO ORGANIZACIONAL
+ * 
+ * Carrega informações da organização do usuário autenticado.
+ * Adiciona req.organization para uso nas rotas.
+ * 
+ * Usado para:
+ * - Validar acesso à organização
+ * - Aplicar configurações específicas da organização
+ * - Filtrar dados por organização
+ */
 const addOrganizationContext = async (req, res, next) => {
   if (req.user && req.user.organization_id) {
     try {
@@ -53,13 +117,24 @@ const addOrganizationContext = async (req, res, next) => {
   next();
 };
 
-// ================================
-// UTILITY FUNCTIONS
-// ================================
+// ===================================================================
+// FUNÇÕES UTILITÁRIAS
+// ===================================================================
 
-// Generate random 6-digit password
+/**
+ * GERAÇÃO DE SENHAS TEMPORÁRIAS SEGURAS
+ * 
+ * Gera senhas de 6 dígitos usando crypto.getRandomValues() para
+ * garantir entropia criptográfica adequada.
+ * 
+ * Utilizado para:
+ * - Criação de novos usuários administrativos
+ * - Reset de senhas por super admins
+ * - Sistema de primeiro login obrigatório
+ * 
+ * @returns {string} Senha de 6 dígitos (100000-999999)
+ */
 function generateRandomPassword() {
-  // Generate secure 6-digit password using crypto
   const min = 100000;
   const max = 999999;
   const randomArray = new Uint32Array(1);
@@ -67,20 +142,50 @@ function generateRandomPassword() {
   return (min + (randomArray[0] % (max - min + 1))).toString();
 }
 
-// Check if user can access organization
+/**
+ * VALIDAÇÃO DE ACESSO ORGANIZACIONAL
+ * 
+ * Implementa o sistema de isolamento multi-tenant verificando
+ * se um usuário pode acessar uma organização específica.
+ * 
+ * Regras de acesso:
+ * - super_admin: Acesso a todas as organizações
+ * - franchise_admin: Acesso a todas as organizações  
+ * - Outros roles: Apenas sua própria organização
+ * 
+ * @param {Object} user - Usuário autenticado (req.user)
+ * @param {string} organizationId - ID da organização a verificar
+ * @returns {boolean} True se pode acessar, false caso contrário
+ */
 function canAccessOrganization(user, organizationId) {
-  // Super admin and franchise admin can access any organization
+  // Super admins têm acesso global
   if (user.role === 'super_admin' || user.role === 'franchise_admin') {
     return true;
   }
-  // Other users can only access their own organization
+  // Usuários normais só acessam sua organização
   return user.organization_id === organizationId;
 }
 
-// ================================
-// HEALTH CHECK
-// ================================
+// ===================================================================
+// HEALTH CHECK E MONITORAMENTO
+// ===================================================================
 
+/**
+ * ENDPOINT DE SAÚDE DO SISTEMA
+ * 
+ * Fornece informações básicas sobre o status do servidor e database.
+ * Usado para monitoramento de infraestrutura e uptime.
+ * 
+ * GET /api/health
+ * 
+ * Response:
+ * {
+ *   status: 'OK',
+ *   database: 'connected',
+ *   timestamp: '2024-08-16T22:30:00.000Z',
+ *   multiTenant: true
+ * }
+ */
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -90,9 +195,19 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ================================
-// AUTHENTICATION ROUTES
-// ================================
+// ===================================================================
+// ROTAS DE AUTENTICAÇÃO
+// ===================================================================
+
+/**
+ * Sistema de autenticação JWT multi-tenant com suporte a:
+ * - Login com email/senha
+ * - Validação de usuários ativos
+ * - Carregamento automático da organização
+ * - Geração de tokens JWT com contexto organizacional
+ * - Sistema de primeiro login obrigatório
+ * - Suporte a senhas temporárias
+ */
 
 app.post('/api/auth/login', async (req, res) => {
   try {
@@ -429,9 +544,25 @@ app.delete('/api/users/:userId', authenticateToken, async (req, res) => {
   }
 });
 
-// ================================
-// ORGANIZATION ROUTES
-// ================================
+// ===================================================================
+// ROTAS DE GERENCIAMENTO DE ORGANIZAÇÕES
+// ===================================================================
+
+/**
+ * Sistema completo de gestão multi-tenant para organizações:
+ * 
+ * Funcionalidades implementadas:
+ * - ✅ Listagem de organizações com filtro por papel
+ * - ✅ Criação de escolas com admin automático
+ * - ✅ Exclusão de escolas com validações de segurança
+ * - ✅ Recuperação de senhas temporárias de admins
+ * - ✅ Gestão de usuários por organização
+ * - ✅ Isolamento completo de dados por escola
+ * 
+ * Níveis de acesso:
+ * - super_admin/franchise_admin: Todas as organizações
+ * - Outros roles: Apenas sua própria organização
+ */
 
 app.get('/api/organizations', authenticateToken, async (req, res) => {
   try {
@@ -645,9 +776,25 @@ app.delete('/api/organizations/:orgId', authenticateToken, async (req, res) => {
   }
 });
 
-// ================================
-// TASK ROUTES (Multi-tenant)
-// ================================
+// ===================================================================
+// ROTAS DE GERENCIAMENTO DE TAREFAS (MULTI-TENANT)
+// ===================================================================
+
+/**
+ * Sistema de tarefas com isolamento completo por organização:
+ * 
+ * Funcionalidades:
+ * - ✅ Listagem de tarefas filtrada por organização
+ * - ✅ Criação de tarefas com atribuição automática
+ * - ✅ Edição e exclusão com validações de permissão
+ * - ✅ Status tracking (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)
+ * - ✅ Prioridades (LOW, MEDIUM, HIGH, URGENT)
+ * - ✅ Isolamento de dados por escola
+ * 
+ * Controle de acesso:
+ * - super_admin/franchise_admin: Podem filtrar por organização
+ * - Outros roles: Apenas tarefas da própria organização
+ */
 
 app.get('/api/tasks', authenticateToken, async (req, res) => {
   try {
@@ -686,9 +833,28 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
   }
 });
 
-// ================================
-// TASK STATISTICS (Multi-tenant)
-// ================================
+// ===================================================================
+// ESTATÍSTICAS E DASHBOARDS (MULTI-TENANT)
+// ===================================================================
+
+/**
+ * Sistema completo de métricas e indicadores para dashboard:
+ * 
+ * Endpoints disponíveis:
+ * - GET /api/stats/tasks - Estatísticas por organização
+ * - GET /api/stats/organizations - Estatísticas globais (super admins)
+ * 
+ * Métricas calculadas:
+ * - Total de tarefas (por status, prioridade, data)
+ * - Taxas de conclusão e progresso
+ * - Indicadores de atraso
+ * - Comparativos entre organizações
+ * 
+ * Usado pelos dashboards:
+ * - Dashboard individual por escola
+ * - Dashboard consolidado da franqueadora
+ * - Relatórios de performance
+ */
 
 app.get('/api/stats/tasks', authenticateToken, async (req, res) => {
   try {
@@ -865,7 +1031,7 @@ process.on('SIGINT', async () => {
 app.listen(PORT, () => {
   console.log(`🚀 Daily Control Multi-Tenant API Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`💾 Database: Connected to PostgreSQL`);
+  console.log(`💾 Database: Connected to MySQL (Digital Ocean)`);
   console.log(`🔐 JWT Secret: Configured`);
   console.log(`🏢 Multi-Tenant: Enabled`);
   console.log(`🔑 Password Management: Active`);
