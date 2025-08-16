@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Frontend - Daily Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e293b;
+            color: white;
+            text-align: center;
+            padding: 50px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #334155;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .success {
+            color: #22c55e;
+            margin: 20px 0;
+        }
+        .error {
+            color: #ef4444;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Reset Frontend Daily Control</h1>
+        <p>Esta página limpa completamente o cache e localStorage do frontend.</p>
+        
+        <button onclick="clearEverything()">🗑️ Limpar Tudo</button>
+        <button onclick="testLogin()">🔑 Testar Login</button>
+        <button onclick="goToApp()">🚀 Ir para App</button>
+        
+        <div id="status"></div>
+        <div id="loginTest"></div>
+    </div>
+
+    <script>
+        function clearEverything() {
+            try {
+                // Limpar localStorage
+                localStorage.clear();
+                
+                // Limpar sessionStorage
+                sessionStorage.clear();
+                
+                // Limpar cookies
+                document.cookie.split(";").forEach(function(c) {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+                
+                // Limpar cache do service worker se existir
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                        for(let registration of registrations) {
+                            registration.unregister();
+                        }
+                    });
+                }
+                
+                document.getElementById('status').innerHTML = '<div class="success">✅ Cache limpo com sucesso!<br>Agora teste o login.</div>';
+            } catch (error) {
+                document.getElementById('status').innerHTML = '<div class="error">❌ Erro ao limpar cache: ' + error.message + '</div>';
+            }
+        }
+
+        async function testLogin() {
+            try {
+                document.getElementById('loginTest').innerHTML = '🔄 Testando login...';
+                
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'wadevenga@hotmail.com',
+                        password: 'Wb070203'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('loginTest').innerHTML = `
+                        <div class="success">
+                            ✅ Login funcionou!<br>
+                            Usuario: ${data.user.name}<br>
+                            Role: ${data.user.role}<br>
+                            Token: ${data.token.substring(0, 50)}...
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('loginTest').innerHTML = `
+                        <div class="error">
+                            ❌ Login falhou: ${data.error || 'Erro desconhecido'}<br>
+                            Status: ${response.status}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('loginTest').innerHTML = `
+                    <div class="error">
+                        ❌ Erro de conexão: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function goToApp() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

@@ -9,6 +9,7 @@ import { sanitizeInput } from '@/utils/inputValidation';
 import { APP_NAME } from '@/constants/app';
 import Logo from '@/components/ui/Logo';
 import ForgotPasswordDialog from './ForgotPasswordDialog';
+import { debugEnvironment } from '@/debug-env';
 
 const LoginForm: React.FC = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
@@ -21,6 +22,10 @@ const LoginForm: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 🔍 DEBUG: Verificar environment variables
+    console.log('🔍 DEBUG LOGIN - Environment check:');
+    debugEnvironment();
     
     // Rate limiting - simple client-side check
     if (loginAttempts >= 5) {

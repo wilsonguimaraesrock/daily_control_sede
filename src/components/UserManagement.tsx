@@ -55,7 +55,15 @@ const UserManagement: React.FC = () => {
         throw new Error('Token de autenticação não encontrado');
       }
 
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+      // Auto-detect API URL para Vercel
+      const getApiBaseUrl = () => {
+        if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+        if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+          return window.location.origin;
+        }
+        return 'http://localhost:3001';
+      };
+      const API_BASE_URL = getApiBaseUrl();
     const response = await fetch(`${API_BASE_URL}/api/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,

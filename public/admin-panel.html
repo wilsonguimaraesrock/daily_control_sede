@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Daily Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: #334155;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: #475569;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        .data-section {
+            background: #334155;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .user-item, .org-item {
+            background: #475569;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .actions {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .success {
+            color: #22c55e;
+            margin: 10px 0;
+        }
+        .error {
+            color: #ef4444;
+            margin: 10px 0;
+        }
+        .loading {
+            color: #f59e0b;
+            margin: 10px 0;
+        }
+        .password {
+            background: #1f2937;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #22c55e;
+        }
+        pre {
+            background: #1f2937;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Daily Control - Admin Panel</h1>
+            <p>Painel de controle direto via API</p>
+        </div>
+
+        <div class="actions">
+            <button onclick="login()">🔑 Login</button>
+            <button onclick="loadData()">📊 Carregar Dados</button>
+            <button onclick="createSchool()">🏫 Criar Escola</button>
+            <button onclick="resetPassword()">🔐 Reset Senha</button>
+            <button onclick="clearCache()">🧹 Limpar Cache</button>
+        </div>
+
+        <div id="status"></div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalSchools">0</div>
+                <div>Escolas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalUsers">0</div>
+                <div>Usuários</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalDepartments">0</div>
+                <div>Departamentos</div>
+            </div>
+        </div>
+
+        <div class="data-section" id="organizations" style="display: none;">
+            <h3>📋 Organizações</h3>
+            <div id="orgList"></div>
+        </div>
+
+        <div class="data-section" id="users" style="display: none;">
+            <h3>👥 Usuários</h3>
+            <div id="userList"></div>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+
+        async function login() {
+            try {
+                document.getElementById('status').innerHTML = '<div class="loading">🔄 Fazendo login...</div>';
+                
+                const response = await fetch('http://localhost:3001/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'wadevenga@hotmail.com',
+                        password: 'S@lmos2714'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Login failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                authToken = data.token;
+                
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        ✅ Login realizado com sucesso!<br>
+                        👤 ${data.user.name} (${data.user.role})<br>
+                        🏢 ${data.organization.name}
+                    </div>
+                `;
+                
+                // Auto-carregar dados após login
+                setTimeout(loadData, 1000);
+                
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">❌ Erro no login: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function loadData() {
+            if (!authToken) {
+                document.getElementById('status').innerHTML = '<div class="error">❌ Faça login primeiro!</div>';
+                return;
+            }
+
+            try {
+                document.getElementById('status').innerHTML = '<div class="loading">📊 Carregando dados...</div>';
+
+                // Carregar estatísticas
+                const statsResponse = await fetch('http://localhost:3001/api/stats/organizations', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const statsData = await statsResponse.json();
+
+                // Carregar usuários
+                const usersResponse = await fetch('http://localhost:3001/api/users', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                const usersData = await usersResponse.json();
+
+                // Atualizar interface
+                document.getElementById('totalSchools').textContent = statsData.global.totalSchools;
+                document.getElementById('totalUsers').textContent = statsData.global.totalUsers;
+                document.getElementById('totalDepartments').textContent = statsData.global.totalDepartments;
+
+                // Mostrar organizações
+                const orgList = document.getElementById('orgList');
+                orgList.innerHTML = statsData.organizations.map(org => `
+                    <div class="org-item">
+                        <strong>${org.organization.name}</strong> (${org.organization.code})<br>
+                        <small>Tipo: ${org.organization.type} | Usuários: ${org.userCount}</small>
+                    </div>
+                `).join('');
+
+                // Mostrar usuários
+                const userList = document.getElementById('userList');
+                userList.innerHTML = usersData.map(user => `
+                    <div class="user-item">
+                        <strong>${user.name}</strong> (${user.email})<br>
+                        <small>Role: ${user.role} | Org: ${user.organization?.name || 'N/A'}</small>
+                    </div>
+                `).join('');
+
+                // Mostrar seções
+                document.getElementById('stats').style.display = 'grid';
+                document.getElementById('organizations').style.display = 'block';
+                document.getElementById('users').style.display = 'block';
+
+                document.getElementById('status').innerHTML = '<div class="success">✅ Dados carregados com sucesso!</div>';
+
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">❌ Erro ao carregar dados: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function createSchool() {
+            if (!authToken) {
+                document.getElementById('status').innerHTML = '<div class="error">❌ Faça login primeiro!</div>';
+                return;
+            }
+
+            const schoolName = prompt('Nome da escola:');
+            const schoolCode = prompt('Código da escola (ex: RFC001):');
+            const adminName = prompt('Nome do admin:');
+            const adminEmail = prompt('Email do admin:');
+
+            if (!schoolName || !schoolCode || !adminName || !adminEmail) {
+                return;
+            }
+
+            try {
+                document.getElementById('status').innerHTML = '<div class="loading">🏫 Criando escola...</div>';
+
+                // Criar organização
+                const orgResponse = await fetch('http://localhost:3001/api/organizations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: schoolName,
+                        code: schoolCode,
+                        type: 'SCHOOL',
+                        settings: {
+                            branding: {
+                                title: `Daily Control - ${schoolName}`,
+                                logo: '/assets/rockfeller-logo.png'
+                            },
+                            canEditDueDates: true,
+                            allowPrivateTasks: false
+                        }
+                    })
+                });
+
+                if (!orgResponse.ok) {
+                    throw new Error(`Erro ao criar organização: ${orgResponse.status}`);
+                }
+
+                const orgData = await orgResponse.json();
+
+                // Criar usuário admin
+                const userResponse = await fetch('http://localhost:3001/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: adminName,
+                        email: adminEmail,
+                        role: 'admin',
+                        organizationId: orgData.id
+                    })
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error(`Erro ao criar usuário: ${userResponse.status}`);
+                }
+
+                const userData = await userResponse.json();
+
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        ✅ Escola criada com sucesso!<br>
+                        🏫 ${schoolName} (${schoolCode})<br>
+                        👤 Admin: ${adminName}<br>
+                        📧 Email: ${adminEmail}<br>
+                        🔑 Senha temporária: <span class="password">${userData.tempPassword}</span>
+                    </div>
+                `;
+
+                // Auto-recarregar dados
+                setTimeout(loadData, 2000);
+
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">❌ Erro ao criar escola: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function resetPassword() {
+            const email = prompt('Email do usuário para resetar senha:');
+            if (!email) return;
+
+            try {
+                document.getElementById('status').innerHTML = '<div class="loading">🔐 Resetando senha...</div>';
+
+                const response = await fetch(`http://localhost:3001/api/users/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ email })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro ao resetar senha: ${response.status}`);
+                }
+
+                const data = await response.json();
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        ✅ Senha resetada!<br>
+                        📧 ${email}<br>
+                        🔑 Nova senha: <span class="password">${data.newPassword}</span>
+                    </div>
+                `;
+
+            } catch (error) {
+                document.getElementById('status').innerHTML = `
+                    <div class="error">❌ Erro ao resetar senha: ${error.message}</div>
+                `;
+            }
+        }
+
+        function clearCache() {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.getElementById('status').innerHTML = '<div class="success">✅ Cache limpo!</div>';
+        }
+
+        // Auto-login se houver token salvo
+        window.onload = function() {
+            const savedToken = localStorage.getItem('auth_token');
+            if (savedToken) {
+                authToken = savedToken;
+                loadData();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -5,8 +5,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Organization, User } from '../types/user';
 
-// Configuração da API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// API Base URL - Auto-detection for Vercel production
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return window.location.origin;
+  }
+  return 'http://localhost:3001';
+};
+const API_BASE_URL = getApiBaseUrl();
 
 interface OrganizationContextType {
   currentOrganization: Organization | null;

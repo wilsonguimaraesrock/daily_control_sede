@@ -43,8 +43,26 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// API Base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// API Base URL - Auto-detection for Vercel production
+const getApiBaseUrl = () => {
+  // Se temos a variável de ambiente, usar ela
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // Auto-detect para Vercel production
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return window.location.origin;
+  }
+  
+  // Fallback para desenvolvimento local
+  return 'http://localhost:3001';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Debug para produção
+console.log('🌐 API_BASE_URL resolved to:', API_BASE_URL);
 
 // Auth Provider
 export function AuthProvider({ children }: { children: ReactNode }) {
