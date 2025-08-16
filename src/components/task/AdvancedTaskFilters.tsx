@@ -20,7 +20,7 @@ interface AdvancedTaskFiltersProps {
   onAccessLevelChange: (level: string) => void;
   selectedPriority: 'all' | 'baixa' | 'media' | 'urgente';
   onPriorityChange: (priority: 'all' | 'baixa' | 'media' | 'urgente') => void;
-  userProfiles: Record<string, UserProfile>;
+  userProfiles: any[];
   onClearFilters: () => void;
 }
 
@@ -63,7 +63,7 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
     { value: 'urgente', label: 'Urgente' }
   ];
 
-  const userList = Object.values(userProfiles).sort((a, b) => a.name.localeCompare(b.name));
+  const userList = Array.isArray(userProfiles) ? userProfiles.sort((a, b) => a.name.localeCompare(b.name)) : [];
 
   const hasActiveFilters = selectedUser !== 'all' || selectedAccessLevel !== 'all' || selectedPriority !== 'all';
 

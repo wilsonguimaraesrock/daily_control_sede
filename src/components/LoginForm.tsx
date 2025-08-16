@@ -17,15 +17,14 @@ const LoginForm: React.FC = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login } = useAuth();
 
-  // Debug: Confirmar que o LoginForm está usando o componente Logo
-  console.log('🔄 LoginForm carregado com componente Logo em:', new Date().toLocaleTimeString());
+  // LoginForm with Logo component loaded
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Rate limiting - simple client-side check
     if (loginAttempts >= 5) {
-      console.log('Muitas tentativas de login. Tente novamente em alguns minutos.');
+      // Too many login attempts - rate limiting
       return;
     }
 

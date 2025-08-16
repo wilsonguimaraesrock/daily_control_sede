@@ -11,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  origin: ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000', 'http://localhost:8081', 'http://localhost:8080'],
   credentials: true
 }));
 app.use(express.json());
@@ -150,6 +150,42 @@ app.get('/api/users', authenticateToken, async (req, res) => {
     res.json(users);
   } catch (error) {
     console.error('❌ Get users error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE USER (admin only)
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const { id } = req.params;
+
+    // Verificar se o usuário existe
+    const user = await prisma.userProfile.findUnique({
+      where: { id }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Impedir que o admin delete a si mesmo
+    if (user.id === req.user.id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+
+    // Deletar o usuário
+    await prisma.userProfile.delete({
+      where: { id }
+    });
+
+    res.json({ message: 'User deleted successfully' });
+    console.log(`✅ User deleted: ${user.email} by ${req.user.email}`);
+  } catch (error) {
+    console.error('❌ Delete user error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

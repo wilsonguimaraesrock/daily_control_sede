@@ -121,12 +121,7 @@ function AppContent() {
                    (navigator.platform.includes('Mac') && navigator.maxTouchPoints > 0);
     
     if (isIPad) {
-      console.log('🍎 iPad detected - App.tsx');
-      console.log('Platform:', navigator.platform);
-      console.log('Touch Points:', navigator.maxTouchPoints);
-      console.log('User Agent:', navigator.userAgent);
-      console.log('Screen:', window.screen.width, 'x', window.screen.height);
-      console.log('Viewport:', window.innerWidth, 'x', window.innerHeight);
+      // iPad detected - optimizations can be added here if needed
     }
   }, []);
 

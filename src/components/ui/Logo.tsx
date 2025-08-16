@@ -30,8 +30,6 @@ const Logo: React.FC<LogoProps> = ({
 
   // Usando logo da pasta public (mais confiável)
   const rockfellerLogoUrl = '/rockfeller-logo.png';
-  console.log('🏢 Logo da Rockfeller URL (300% maior):', rockfellerLogoUrl);
-  console.log('🔄 Componente Logo carregado em:', new Date().toLocaleTimeString());
 
   // ✅ LOGO REAL DA ROCKFELLER IMPLEMENTADA! [300% MAIOR]
   if (variant === 'icon' || variant === 'full') {
@@ -42,8 +40,7 @@ const Logo: React.FC<LogoProps> = ({
           alt="Rockfeller Logo" 
           className="w-full h-full object-contain"
           onError={(e) => {
-            console.error('❌ Erro ao carregar logo da Rockfeller:', e);
-            console.log('🔧 Aplicando fallback...');
+            // Fallback for logo loading error
             // Fallback para o design anterior se a imagem não carregar
             (e.target as HTMLImageElement).style.display = 'none';
             (e.target as HTMLImageElement).parentElement!.innerHTML = `
@@ -56,7 +53,7 @@ const Logo: React.FC<LogoProps> = ({
             `;
           }}
           onLoad={() => {
-            console.log('✅ Logo da Rockfeller carregada com sucesso! (300% maior)');
+            // Logo loaded successfully
           }}
         />
       </div>
@@ -79,8 +76,7 @@ const Logo: React.FC<LogoProps> = ({
           alt="Rockfeller Logo" 
           className="w-full h-full object-contain"
           onError={(e) => {
-            console.error('❌ Erro ao carregar logo da Rockfeller:', e);
-            console.log('🔧 Aplicando fallback...');
+            // Fallback for logo loading error
             // Fallback para o design anterior se a imagem não carregar
             (e.target as HTMLImageElement).style.display = 'none';
             (e.target as HTMLImageElement).parentElement!.innerHTML = `
@@ -93,7 +89,7 @@ const Logo: React.FC<LogoProps> = ({
             `;
           }}
           onLoad={() => {
-            console.log('✅ Logo da Rockfeller carregada com sucesso! (200% maior)');
+            // Logo loaded successfully
           }}
         />
       </div>

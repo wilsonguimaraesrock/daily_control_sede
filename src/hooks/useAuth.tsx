@@ -178,6 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const error = await response.json();
       throw new Error(error.error || 'User deletion failed');
     }
+
+    return true;
   };
 
   const getVisibleUsers = async (): Promise<User[]> => {

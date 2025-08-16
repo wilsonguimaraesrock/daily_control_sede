@@ -48,33 +48,36 @@ const UserManagement: React.FC = () => {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      // ✅ CARREGAR TODOS OS USUÁRIOS (ATIVOS E INATIVOS) para gerenciamento
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error('Erro ao carregar usuários:', error);
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar usuários",
-          variant: "destructive"
-        });
-        return;
+      // ✅ CARREGAR TODOS OS USUÁRIOS (ATIVOS E INATIVOS) para gerenciamento via API MySQL
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado');
       }
+
+      const response = await fetch('http://localhost:3001/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar usuários');
+      }
+
+      const data = await response.json();
 
       const users = (data || []).map((user: any) => ({
         id: user.id as string,
-        user_id: user.user_id as string,
+        user_id: user.userId as string,
         name: user.name as string,
         email: user.email as string,
         role: user.role as User['role'],
-        is_active: user.is_active as boolean,
-        password_hash: user.password_hash as string,
-        created_at: new Date(user.created_at as string),
-        last_login: user.last_login ? new Date(user.last_login as string) : undefined,
-        first_login_completed: (user as any).first_login_completed as boolean
+        is_active: user.isActive as boolean,
+        password_hash: '', // Não retornado pela API por segurança
+        created_at: new Date(user.createdAt as string),
+        last_login: user.lastLogin ? new Date(user.lastLogin as string) : undefined,
+        first_login_completed: true // Assumindo que usuários existentes já fizeram primeiro login
       }));
 
       setConfirmedUsers(users);
@@ -261,18 +264,30 @@ const UserManagement: React.FC = () => {
 
     if (confirm(`Tem certeza que deseja excluir o usuário "${userName}"? Esta ação não pode ser desfeita.`)) {
       try {
-        const success = await deleteUser(userId);
-        if (success) {
-          toast({
-            title: "Usuário Excluído",
-            description: `${userName} foi excluído com sucesso`,
-          });
-          await loadUsers();
-        }
+        // Remover usuário da lista imediatamente (UI otimista)
+        setConfirmedUsers(prev => prev.filter(user => user.id !== userId));
+        
+        // Fazer a exclusão no servidor
+        await deleteUser(userId);
+        
+        // Exibir mensagem de sucesso
+        toast({
+          title: "Usuário Excluído",
+          description: `${userName} foi excluído com sucesso`,
+        });
+        
+        // Recarregar lista para garantir sincronização
+        await loadUsers();
+        
       } catch (error) {
+        console.error('Erro ao excluir usuário:', error);
+        
+        // Em caso de erro, recarregar a lista para restaurar o estado correto
+        await loadUsers();
+        
         toast({
           title: "Erro",
-          description: "Erro ao excluir usuário",
+          description: "Erro ao excluir usuário. Tente novamente.",
           variant: "destructive"
         });
       }

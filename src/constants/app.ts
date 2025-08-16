@@ -1,11 +1,11 @@
 // Constantes da aplicação
-export const APP_NAME = "Daily Control - SEDE";
-export const APP_SHORT_NAME = "Daily Control SEDE";
-export const APP_DESCRIPTION = "Sistema de gerenciamento de tarefas - SEDE";
+export const APP_NAME = "Daily Control - PD&I Tech";
+export const APP_SHORT_NAME = "Daily Control PD&I Tech";
+export const APP_DESCRIPTION = "Sistema de gerenciamento de tarefas - PD&I Tech";
 
 // Informações de email
-export const EMAIL_SENDER = "sede@seudominio.com.br";
-export const EMAIL_SENDER_NAME = "Daily Control - SEDE";
+export const EMAIL_SENDER = "pdi@seudominio.com.br";
+export const EMAIL_SENDER_NAME = "Daily Control - PD&I Tech";
 
 // URLs da aplicação
 export const APP_URL = window.location.origin;
