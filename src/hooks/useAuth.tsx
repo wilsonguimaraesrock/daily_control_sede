@@ -1,15 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-
-// Types
-interface User {
-  id: string;
-  userId: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  lastLogin?: string;
-}
+import { User, AuthUser, UserRole, Organization, UserPermissions, PasswordReset } from '../types/user';
+import { generatePermissions, canEditTaskDueDate as canEditDueDate, canManageUsers, isSuperAdmin as checkSuperAdmin, generateRandomPassword } from '../utils/permissions';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -17,6 +8,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   loading: boolean;
   needsPasswordChange: boolean;
+  
+  // ===== LEGACY COMPATIBILITY =====
   canAccessUserManagement: () => boolean;
   changePassword: (newPassword: string) => Promise<void>;
   firstTimePasswordChange: (newPassword: string) => Promise<void>;
@@ -26,6 +19,25 @@ interface AuthContextType {
   getVisibleUsers: () => Promise<User[]>;
   resendTemporaryPassword: (email: string) => Promise<void>;
   canEditTaskDueDate: () => boolean;
+  
+  // ===== MULTI-TENANT FEATURES =====
+  currentOrganization: Organization | null;
+  userPermissions: UserPermissions | null;
+  isSuperAdmin: () => boolean;
+  canSwitchOrganization: () => boolean;
+  
+  // Password Management
+  generateTemporaryPassword: (userId: string) => Promise<PasswordReset>;
+  resetUserPassword: (userId: string) => Promise<PasswordReset>;
+  
+  // Organization Management  
+  getOrganizations: () => Promise<Organization[]>;
+  createOrganization: (orgData: Partial<Organization>) => Promise<Organization>;
+  updateOrganization: (orgId: string, orgData: Partial<Organization>) => Promise<Organization>;
+  
+  // Enhanced User Management
+  createUserInOrganization: (userData: Partial<User>, organizationId?: string) => Promise<User>;
+  getUsersInOrganization: (organizationId?: string) => Promise<User[]>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,17 +50,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
+  
+  // ===== MULTI-TENANT STATE =====
+  const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
+  const [userPermissions, setUserPermissions] = useState<UserPermissions | null>(null);
 
   // Initialize auth state
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      // Verify token and get user data
       fetchCurrentUser(token);
     } else {
       setLoading(false);
     }
   }, []);
+
+  // Update permissions when user changes
+  useEffect(() => {
+    if (currentUser) {
+      const permissions = generatePermissions(currentUser);
+      setUserPermissions(permissions);
+      
+      // Load user's organization if not loaded
+      if (currentUser.organization_id && !currentOrganization) {
+        loadUserOrganization(currentUser.organization_id);
+      }
+    } else {
+      setUserPermissions(null);
+      setCurrentOrganization(null);
+    }
+  }, [currentUser]);
+
+  // ========================================
+  // CORE AUTH FUNCTIONS
+  // ========================================
 
   const fetchCurrentUser = async (token: string) => {
     try {
@@ -73,6 +108,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const loadUserOrganization = async (organizationId: string) => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch(`${API_BASE_URL}/api/organizations/${organizationId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const organization = await response.json();
+        setCurrentOrganization(organization);
+        
+        // Update page title
+        if (organization.settings?.branding?.title) {
+          document.title = organization.settings.branding.title;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading organization:', error);
+    }
+  };
+
   const login = async (email: string, password: string) => {
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
@@ -85,16 +144,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(error.error || 'Login failed');
     }
 
-    const { user, token } = await response.json();
+    const { user, token, organization } = await response.json();
     localStorage.setItem('auth_token', token);
     setCurrentUser(user);
+    
+    if (organization) {
+      setCurrentOrganization(organization);
+    }
   };
 
   const logout = async () => {
     localStorage.removeItem('auth_token');
+    localStorage.removeItem('current_organization_id');
     setCurrentUser(null);
+    setCurrentOrganization(null);
+    setUserPermissions(null);
     setNeedsPasswordChange(false);
   };
+
+  // ========================================
+  // PASSWORD MANAGEMENT
+  // ========================================
 
   const changePassword = async (newPassword: string) => {
     const token = localStorage.getItem('auth_token');
@@ -113,18 +183,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const error = await response.json();
       throw new Error(error.error || 'Password change failed');
     }
+
+    setNeedsPasswordChange(false);
   };
 
   const firstTimePasswordChange = async (newPassword: string) => {
     await changePassword(newPassword);
-    setNeedsPasswordChange(false);
   };
+
+  const generateTemporaryPassword = async (userId: string): Promise<PasswordReset> => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+
+    const tempPassword = generateRandomPassword();
+    
+    const response = await fetch(`${API_BASE_URL}/api/users/${userId}/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ temporaryPassword: tempPassword })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Password reset failed');
+    }
+
+    return response.json();
+  };
+
+  const resetUserPassword = async (userId: string): Promise<PasswordReset> => {
+    return generateTemporaryPassword(userId);
+  };
+
+  // ========================================
+  // USER MANAGEMENT
+  // ========================================
 
   const createUser = async (userData: any) => {
     const token = localStorage.getItem('auth_token');
     if (!token) throw new Error('Not authenticated');
 
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    // Add current organization if not specified and user is not super admin
+    if (!userData.organization_id && currentUser && !checkSuperAdmin(currentUser)) {
+      userData.organization_id = currentUser.organization_id;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/users`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -139,6 +246,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return response.json();
+  };
+
+  const createUserInOrganization = async (userData: Partial<User>, organizationId?: string): Promise<User> => {
+    const orgId = organizationId || currentUser?.organization_id;
+    if (!orgId) throw new Error('Organization ID required');
+
+    return createUser({ ...userData, organization_id: orgId });
   };
 
   const updateUser = async (userId: string, userData: any) => {
@@ -201,25 +315,136 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.json();
   };
 
-  const resendTemporaryPassword = async (email: string) => {
-    // Implement if needed
-    console.log('Resend temporary password for:', email);
+  const getUsersInOrganization = async (organizationId?: string): Promise<User[]> => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+
+    const orgId = organizationId || currentUser?.organization_id;
+    const url = orgId ? 
+      `${API_BASE_URL}/api/organizations/${orgId}/users` : 
+      `${API_BASE_URL}/api/users`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch users');
+    }
+
+    return response.json();
   };
 
+  // ========================================
+  // ORGANIZATION MANAGEMENT
+  // ========================================
+
+  const getOrganizations = async (): Promise<Organization[]> => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch organizations');
+    }
+
+    return response.json();
+  };
+
+  const createOrganization = async (orgData: Partial<Organization>): Promise<Organization> => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orgData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Organization creation failed');
+    }
+
+    return response.json();
+  };
+
+  const updateOrganization = async (orgId: string, orgData: Partial<Organization>): Promise<Organization> => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Not authenticated');
+
+    const response = await fetch(`${API_BASE_URL}/api/organizations/${orgId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orgData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Organization update failed');
+    }
+
+    return response.json();
+  };
+
+  // ========================================
+  // PERMISSION HELPERS
+  // ========================================
+
   const canAccessUserManagement = () => {
-    return currentUser?.role === 'admin';
+    return currentUser ? canManageUsers(currentUser) : false;
   };
 
   const canEditTaskDueDate = () => {
-    return currentUser?.role === 'admin' || currentUser?.role === 'franqueado';
+    return currentUser ? canEditDueDate(currentUser) : false;
   };
 
-  const value = {
+  const isSuperAdmin = () => {
+    return currentUser ? checkSuperAdmin(currentUser) : false;
+  };
+
+  const canSwitchOrganization = () => {
+    return currentUser?.role === 'super_admin' || currentUser?.role === 'franchise_admin';
+  };
+
+  // ========================================
+  // LEGACY COMPATIBILITY
+  // ========================================
+
+  const resendTemporaryPassword = async (email: string) => {
+    console.log('Resend temporary password for:', email);
+    // TODO: Implement if needed
+  };
+
+  // ========================================
+  // CONTEXT VALUE
+  // ========================================
+
+  const value: AuthContextType = {
     currentUser,
     login,
     logout,
     loading,
     needsPasswordChange,
+    
+    // Legacy compatibility
     canAccessUserManagement,
     changePassword,
     firstTimePasswordChange,
@@ -228,7 +453,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deleteUser,
     getVisibleUsers,
     resendTemporaryPassword,
-    canEditTaskDueDate
+    canEditTaskDueDate,
+    
+    // Multi-tenant features
+    currentOrganization,
+    userPermissions,
+    isSuperAdmin,
+    canSwitchOrganization,
+    
+    // Password management
+    generateTemporaryPassword,
+    resetUserPassword,
+    
+    // Organization management
+    getOrganizations,
+    createOrganization,
+    updateOrganization,
+    
+    // Enhanced user management
+    createUserInOrganization,
+    getUsersInOrganization
   };
 
   return (

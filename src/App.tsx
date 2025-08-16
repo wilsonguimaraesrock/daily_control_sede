@@ -3,10 +3,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
+import { OrganizationProvider } from '@/contexts/OrganizationContext';
 import Index from '@/pages/Index';
 import LoginForm from '@/components/LoginForm';
 import FirstTimePasswordChange from '@/components/FirstTimePasswordChange';
+import { OrganizationSelector } from '@/components/OrganizationSelector';
 import { useState, useEffect, Component, ReactNode } from 'react';
+import { getOrganizationTitle } from '@/utils/permissions';
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -104,7 +107,7 @@ function LoadingScreen() {
 }
 
 function AppContent() {
-  const { currentUser, needsPasswordChange, loading } = useAuth();
+  const { currentUser, needsPasswordChange, loading, currentOrganization } = useAuth();
   const [debugMode, setDebugMode] = useState(false);
   
   // Check for debug mode in URL
@@ -114,6 +117,12 @@ function AppContent() {
       setDebugMode(true);
     }
   }, []);
+  
+  // Update page title based on organization
+  useEffect(() => {
+    const title = getOrganizationTitle(currentOrganization);
+    document.title = title;
+  }, [currentOrganization]);
   
   // iPad detection and logging
   useEffect(() => {
@@ -165,11 +174,17 @@ function AppContent() {
     return (
       <div className="relative">
         {content}
-        <div className="fixed bottom-4 right-4 bg-black/80 text-white p-2 rounded text-xs z-50">
-          <div>Debug Mode Active</div>
+        <div className="fixed bottom-4 right-4 bg-black/80 text-white p-2 rounded text-xs z-50 max-w-xs">
+          <div className="font-bold text-green-400">🔧 Debug Mode Active</div>
           <div>User: {currentUser?.name || 'Not logged in'}</div>
+          <div>Role: {currentUser?.role || 'None'}</div>
+          <div>Organization: {currentOrganization?.name || 'None'}</div>
+          <div>Org Type: {currentOrganization?.type || 'None'}</div>
           <div>Loading: {loading ? 'Yes' : 'No'}</div>
           <div>Password Change: {needsPasswordChange ? 'Yes' : 'No'}</div>
+          <div className="mt-1 pt-1 border-t border-gray-600">
+            <div>Multi-Tenant: ✅ Active</div>
+          </div>
         </div>
       </div>
     );
@@ -184,12 +199,23 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <AuthProvider>
-            <AppContent />
+            <AppContentWithOrganization />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
+  );
+}
+
+// Wrapper to provide organization context after auth is available
+function AppContentWithOrganization() {
+  const { currentUser } = useAuth();
+  
+  return (
+    <OrganizationProvider currentUser={currentUser}>
+      <AppContent />
+    </OrganizationProvider>
   );
 }
 

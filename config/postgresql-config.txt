@@ -1,0 +1,18 @@
+# Configuração PostgreSQL para Multi-Tenant
+# Copie este conteúdo para o seu arquivo .env
+
+DATABASE_URL="postgresql://user:password@localhost:5432/daily_control_multitenant?schema=public"
+JWT_SECRET="your-super-secret-jwt-key"
+VITE_API_BASE_URL="http://localhost:3001"
+NODE_ENV="development"
+SUPER_ADMIN_EMAIL="wadevenga@hotmail.com"
+ENABLE_ORGANIZATION_ISOLATION="true"
+TEMP_PASSWORD_LENGTH="6"
+
+# INSTRUÇÕES:
+# 1. Instale PostgreSQL localmente: brew install postgresql
+# 2. Inicie o serviço: brew services start postgresql
+# 3. Crie o banco: createdb daily_control_multitenant
+# 4. Atualize o DATABASE_URL com suas credenciais
+# 5. Execute: npx prisma db push
+# 6. Execute: npx prisma generate

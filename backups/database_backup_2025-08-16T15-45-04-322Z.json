@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-08-16T15:45:04.325Z",
+  "version": "1.0.0",
+  "database": "mysql",
+  "tables": {
+    "userProfiles": [
+      {
+        "id": "44fee957-24ee-4f90-9631-e4c4d8e006fa",
+        "userId": "567a778f-a5e0-427e-85df-8917c7efe607",
+        "name": "Administrador",
+        "email": "wadevenga@hotmail.com",
+        "role": "admin",
+        "isActive": true,
+        "passwordHash": "$2b$12$7emBBZgaLxKT1tuvJ9k3.ejvJzhDTHL8TSPqISS8PCF/nWIbew27u",
+        "createdAt": "2025-07-07T20:49:57.931Z",
+        "lastLogin": "2025-08-16T15:23:38.497Z"
+      },
+      {
+        "id": "9c981b6b-b72f-49ac-9405-fd47dad93849",
+        "userId": "06c74689-7f35-4996-8e29-ac691f57d02e",
+        "name": "Wade Venga",
+        "email": "wadepvenga@gmail.com",
+        "role": "franqueado",
+        "isActive": true,
+        "passwordHash": "$2b$12$u.TdOXCI1z1EC2Y1I155P.3n0Dzhk0JcDj2jH51NIuu1DP.yedPo2",
+        "createdAt": "2025-07-08T03:41:54.553Z",
+        "lastLogin": "2025-08-15T16:14:53.765Z"
+      }
+    ],
+    "tasks": [],
+    "taskAssignments": [],
+    "taskEditHistory": [],
+    "availableMonths": []
+  }
+}

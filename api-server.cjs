@@ -9,7 +9,10 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
-// Middleware
+// ================================
+// MIDDLEWARE
+// ================================
+
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000', 'http://localhost:8081', 'http://localhost:8080'],
   credentials: true
@@ -34,35 +37,67 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Basic routes
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Daily Control API Server', 
-    status: 'running',
-    timestamp: new Date().toISOString()
-  });
-});
+// Organization context middleware
+const addOrganizationContext = async (req, res, next) => {
+  if (req.user && req.user.organization_id) {
+    try {
+      const organization = await prisma.organization.findUnique({
+        where: { id: req.user.organization_id }
+      });
+      req.organization = organization;
+    } catch (error) {
+      console.error('Error loading organization context:', error);
+    }
+  }
+  next();
+};
+
+// ================================
+// UTILITY FUNCTIONS
+// ================================
+
+// Generate random 6-digit password
+function generateRandomPassword() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Check if user can access organization
+function canAccessOrganization(user, organizationId) {
+  // Super admin and franchise admin can access any organization
+  if (user.role === 'super_admin' || user.role === 'franchise_admin') {
+    return true;
+  }
+  // Other users can only access their own organization
+  return user.organization_id === organizationId;
+}
+
+// ================================
+// HEALTH CHECK
+// ================================
 
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    database: 'connected',
-    timestamp: new Date().toISOString() 
+    database: 'connected', 
+    timestamp: new Date().toISOString(),
+    multiTenant: true
   });
 });
 
-// LOGIN
+// ================================
+// AUTHENTICATION ROUTES
+// ================================
+
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
-    }
-
-    // Find user
+    // Find user with organization
     const user = await prisma.userProfile.findUnique({
-      where: { email: email.toLowerCase() }
+      where: { email },
+      include: {
+        organization: true
+      }
     });
 
     if (!user || !user.isActive) {
@@ -70,22 +105,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash || '');
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    // Generate token
-    const token = jwt.sign(
-      { 
-        id: user.id, 
-        userId: user.userId,
-        email: user.email, 
-        role: user.role 
-      },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
 
     // Update last login
     await prisma.userProfile.update({
@@ -93,216 +116,406 @@ app.post('/api/auth/login', async (req, res) => {
       data: { lastLogin: new Date() }
     });
 
-    // Return user data without password
-    const { passwordHash, ...userWithoutPassword } = user;
-    
+    // Generate JWT token
+    const token = jwt.sign({
+      id: user.id,
+      userId: user.userId,
+      email: user.email,
+      role: user.role,
+      organization_id: user.organizationId
+    }, JWT_SECRET, { expiresIn: '24h' });
+
+    console.log(`✅ Login successful: ${email} (${user.role})`);
+
     res.json({
-      user: userWithoutPassword,
+      user: {
+        id: user.id,
+        user_id: user.userId,
+        organization_id: user.organizationId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        is_active: user.isActive,
+        created_at: user.createdAt,
+        last_login: user.lastLogin,
+        first_login_completed: user.firstLoginCompleted
+      },
+      organization: user.organization,
       token
     });
-
-    console.log(`✅ Login successful: ${user.email} (${user.role})`);
   } catch (error) {
-    console.error('❌ Login error:', error);
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// GET CURRENT USER
+app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.userProfile.update({
+      where: { userId: req.user.userId },
+      data: { 
+        passwordHash: hashedPassword,
+        firstLoginCompleted: true
+      }
+    });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+// ================================
+// USER ROUTES
+// ================================
+
 app.get('/api/users/me', authenticateToken, async (req, res) => {
   try {
     const user = await prisma.userProfile.findUnique({
-      where: { id: req.user.id }
+      where: { userId: req.user.userId },
+      include: {
+        organization: true
+      }
     });
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const { passwordHash, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    res.json({
+      id: user.id,
+      user_id: user.userId,
+      organization_id: user.organizationId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      is_active: user.isActive,
+      created_at: user.createdAt,
+      last_login: user.lastLogin,
+      first_login_completed: user.firstLoginCompleted,
+      organization: user.organization
+    });
   } catch (error) {
-    console.error('❌ Get user error:', error);
+    console.error('Get current user error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// GET ALL USERS (admin only)
 app.get('/api/users', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Insufficient permissions' });
+    let whereClause = {};
+
+    // Super admin can see all users, others only from their organization
+    if (req.user.role !== 'super_admin' && req.user.role !== 'franchise_admin') {
+      whereClause.organizationId = req.user.organization_id;
     }
 
     const users = await prisma.userProfile.findMany({
-      select: {
-        id: true,
-        userId: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        lastLogin: true
+      where: whereClause,
+      include: {
+        organization: true
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    const formattedUsers = users.map(user => ({
+      id: user.id,
+      userId: user.userId,
+      organizationId: user.organizationId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      createdAt: user.createdAt,
+      lastLogin: user.lastLogin,
+      firstLoginCompleted: user.firstLoginCompleted,
+      organization: user.organization
+    }));
+
+    res.json(formattedUsers);
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/users', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, role, organization_id } = req.body;
+
+    // Validate organization access
+    const targetOrgId = organization_id || req.user.organization_id;
+    if (!canAccessOrganization(req.user, targetOrgId)) {
+      return res.status(403).json({ error: 'Access denied to organization' });
+    }
+
+    // Generate temporary password
+    const tempPassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    const user = await prisma.userProfile.create({
+      data: {
+        userId: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        organizationId: targetOrgId,
+        name,
+        email,
+        role,
+        passwordHash: hashedPassword,
+        firstLoginCompleted: false
+      },
+      include: {
+        organization: true
       }
+    });
+
+    // Create password reset record
+    await prisma.passwordReset.create({
+      data: {
+        userId: user.userId,
+        newPassword: tempPassword,
+        createdBy: req.user.userId
+      }
+    });
+
+    console.log(`👤 User created: ${email} - Temp password: ${tempPassword}`);
+
+    res.json({
+      user: {
+        id: user.id,
+        userId: user.userId,
+        organizationId: user.organizationId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        organization: user.organization
+      },
+      temporaryPassword: tempPassword
+    });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+app.post('/api/users/:userId/reset-password', authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { temporaryPassword } = req.body;
+
+    // Find the user
+    const user = await prisma.userProfile.findUnique({
+      where: { userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check organization access
+    if (!canAccessOrganization(req.user, user.organizationId)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Generate password if not provided
+    const newPassword = temporaryPassword || generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user password
+    await prisma.userProfile.update({
+      where: { userId },
+      data: { 
+        passwordHash: hashedPassword,
+        firstLoginCompleted: false
+      }
+    });
+
+    // Create password reset record
+    const passwordReset = await prisma.passwordReset.create({
+      data: {
+        userId,
+        newPassword,
+        createdBy: req.user.userId
+      }
+    });
+
+    console.log(`🔑 Password reset for ${user.email}: ${newPassword}`);
+
+    res.json({
+      id: passwordReset.id,
+      userId: passwordReset.userId,
+      newPassword: passwordReset.newPassword,
+      createdBy: passwordReset.createdBy,
+      createdAt: passwordReset.createdAt,
+      isUsed: passwordReset.isUsed
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// ================================
+// ORGANIZATION ROUTES
+// ================================
+
+app.get('/api/organizations', authenticateToken, async (req, res) => {
+  try {
+    let whereClause = {};
+
+    // Non-super-admin users only see their organization
+    if (req.user.role !== 'super_admin' && req.user.role !== 'franchise_admin') {
+      whereClause.id = req.user.organization_id;
+    }
+
+    const organizations = await prisma.organization.findMany({
+      where: whereClause,
+      orderBy: { name: 'asc' }
+    });
+
+    res.json(organizations);
+  } catch (error) {
+    console.error('Get organizations error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/organizations/:orgId', authenticateToken, async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    if (!canAccessOrganization(req.user, orgId)) {
+      return res.status(403).json({ error: 'Access denied to organization' });
+    }
+
+    const organization = await prisma.organization.findUnique({
+      where: { id: orgId }
+    });
+
+    if (!organization) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    res.json(organization);
+  } catch (error) {
+    console.error('Get organization error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/organizations', authenticateToken, async (req, res) => {
+  try {
+    // Only super admin and franchise admin can create organizations
+    if (req.user.role !== 'super_admin' && req.user.role !== 'franchise_admin') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const { name, code, type, settings } = req.body;
+
+    const organization = await prisma.organization.create({
+      data: {
+        name,
+        code: code || name.toUpperCase().replace(/\s+/g, ''),
+        type: type || 'SCHOOL',
+        settings: settings || {}
+      }
+    });
+
+    console.log(`🏢 Organization created: ${name} (${organization.code})`);
+
+    res.json(organization);
+  } catch (error) {
+    console.error('Create organization error:', error);
+    res.status(500).json({ error: 'Failed to create organization' });
+  }
+});
+
+app.get('/api/organizations/:orgId/users', authenticateToken, async (req, res) => {
+  try {
+    const { orgId } = req.params;
+
+    if (!canAccessOrganization(req.user, orgId)) {
+      return res.status(403).json({ error: 'Access denied to organization' });
+    }
+
+    const users = await prisma.userProfile.findMany({
+      where: { organizationId: orgId },
+      include: {
+        organization: true
+      },
+      orderBy: { name: 'asc' }
     });
 
     res.json(users);
   } catch (error) {
-    console.error('❌ Get users error:', error);
+    console.error('Get organization users error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// DELETE USER (admin only)
-app.delete('/api/users/:id', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Insufficient permissions' });
-    }
+// ================================
+// TASK ROUTES (Multi-tenant)
+// ================================
 
-    const { id } = req.params;
-
-    // Verificar se o usuário existe
-    const user = await prisma.userProfile.findUnique({
-      where: { id }
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Impedir que o admin delete a si mesmo
-    if (user.id === req.user.id) {
-      return res.status(400).json({ error: 'Cannot delete your own account' });
-    }
-
-    // Deletar o usuário
-    await prisma.userProfile.delete({
-      where: { id }
-    });
-
-    res.json({ message: 'User deleted successfully' });
-    console.log(`✅ User deleted: ${user.email} by ${req.user.email}`);
-  } catch (error) {
-    console.error('❌ Delete user error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// GET TASKS
 app.get('/api/tasks', authenticateToken, async (req, res) => {
   try {
+    let whereClause = {};
+
+    // Super admin can filter by organization, others only see their org
+    if (req.user.role === 'super_admin' || req.user.role === 'franchise_admin') {
+      const { organization_id } = req.query;
+      if (organization_id && organization_id !== 'all') {
+        whereClause.organizationId = organization_id;
+      }
+    } else {
+      whereClause.organizationId = req.user.organization_id;
+    }
+
     const tasks = await prisma.task.findMany({
+      where: whereClause,
       include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
-        },
+        organization: true,
+        creator: true,
         assignments: {
           include: {
-            user: {
-              select: {
-                id: true,
-                userId: true,
-                name: true,
-                email: true,
-                role: true
-              }
-            }
+            user: true
           }
         }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    res.json({ tasks });
     console.log(`📋 Retrieved ${tasks.length} tasks for ${req.user.email}`);
+
+    res.json(tasks);
   } catch (error) {
-    console.error('❌ Get tasks error:', error);
+    console.error('Get tasks error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// CREATE TASK
-app.post('/api/tasks', authenticateToken, async (req, res) => {
-  try {
-    const { title, description, priority, dueDate } = req.body;
-
-    if (!title) {
-      return res.status(400).json({ error: 'Title is required' });
-    }
-
-    const newTask = await prisma.task.create({
-      data: {
-        title,
-        description: description || '',
-        priority: priority || 'medium',
-        status: 'pendente',
-        dueDate: dueDate ? new Date(dueDate) : null,
-        createdBy: req.user.id,
-        isPrivate: false
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
-        },
-        assignments: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                userId: true,
-                name: true,
-                email: true,
-                role: true
-              }
-            }
-          }
-        }
-      }
-    });
-
-    res.status(201).json(newTask);
-    console.log(`✅ Task created: "${title}" by ${req.user.email}`);
-  } catch (error) {
-    console.error('❌ Create task error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-  console.error('❌ Unhandled error:', err);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// Start server
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Daily Control API Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`💾 Database: Connected to MySQL`);
-  console.log(`🔐 JWT Secret: ${JWT_SECRET ? 'Configured' : 'Using default'}`);
-});
+// ================================
+// SERVER STARTUP
+// ================================
 
 // Graceful shutdown
-const gracefulShutdown = async () => {
+process.on('SIGINT', async () => {
   console.log('🛑 Shutting down gracefully...');
   await prisma.$disconnect();
-  server.close(() => {
-    console.log('✅ Server closed');
-    process.exit(0);
-  });
-};
+  console.log('✅ Server closed');
+  process.exit(0);
+});
 
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
+app.listen(PORT, () => {
+  console.log(`🚀 Daily Control Multi-Tenant API Server running on port ${PORT}`);
+  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`💾 Database: Connected to PostgreSQL`);
+  console.log(`🔐 JWT Secret: Configured`);
+  console.log(`🏢 Multi-Tenant: Enabled`);
+  console.log(`🔑 Password Management: Active`);
+});
