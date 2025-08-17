@@ -75,9 +75,12 @@ export default async function handler(req, res) {
       const bcrypt = await import('bcryptjs');
       const hashedPassword = await bcrypt.default.hash(temporaryPassword, 10);
 
+      const userId = `user-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+      
       const newUser = await prisma.userProfile.create({
         data: {
-          id: `user-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          id: userId,
+          userId: userId, // Add this required field
           email,
           name,
           role,

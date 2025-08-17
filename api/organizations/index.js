@@ -134,9 +134,12 @@ async function handlePost(req, res, user) {
       // Create admin user - role based on organization type
       const adminRole = type === 'DEPARTMENT' ? 'franqueado' : 'admin';
       
+      const userId = `user-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+      
       const admin = await tx.userProfile.create({
         data: {
-          id: `user-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          id: userId,
+          userId: userId, // Add this required field
           email: adminEmail,
           name: adminName,
           role: adminRole,
