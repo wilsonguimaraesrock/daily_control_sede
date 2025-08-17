@@ -108,11 +108,11 @@ export const OrganizationSelector: React.FC<OrganizationSelectorProps> = ({
   const getOrganizationBadgeColor = (type: string) => {
     switch (type) {
       case 'SCHOOL':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-600 text-white font-medium';
       case 'DEPARTMENT':
-        return 'bg-green-100 text-green-800';
+        return 'bg-orange-600 text-white font-medium';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-600 text-white font-medium';
     }
   };
 

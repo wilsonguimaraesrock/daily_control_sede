@@ -54,7 +54,10 @@ async function handleGet(req, res, user) {
     }
 
     const organizations = await prisma.organization.findMany({
-      where: whereClause,
+      where: {
+        ...whereClause,
+        isActive: true // Only show active organizations
+      },
       orderBy: { name: 'asc' }
     });
 

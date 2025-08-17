@@ -32,19 +32,20 @@ export default async function handler(req, res) {
   const prisma = new PrismaClient();
 
   try {
-    if (req.method === 'DELETE') {
-      // Only super admin can delete organizations
+    if (req.method === 'PATCH') {
+      // Only super admin can deactivate organizations
       if (user.role !== 'super_admin') {
         return res.status(403).json({ error: 'Insufficient permissions' });
       }
 
-      // Delete organization
-      await prisma.organization.delete({
-        where: { id: organizationId }
+      // Deactivate organization
+      await prisma.organization.update({
+        where: { id: organizationId },
+        data: { isActive: false }
       });
 
-      console.log(`🗑️ Organization deleted: ${organizationId}`);
-      return res.status(200).json({ message: 'Organization deleted successfully' });
+      console.log(`📴 Organization deactivated: ${organizationId}`);
+      return res.status(200).json({ message: 'Organization deactivated successfully' });
 
     } else {
       return res.status(405).json({ error: 'Method not allowed' });
