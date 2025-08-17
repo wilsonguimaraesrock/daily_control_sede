@@ -15,12 +15,11 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('tasks');
   const { currentUser, logout, canAccessUserManagement, isSuperAdmin, canSwitchOrganization } = useAuth();
   
-  // Check if user can access franchise dashboard
-  // Temporary: Use admin role + specific email until PostgreSQL migration
+  // Check if user can access franchise dashboard - only PD&I organization
   const canAccessFranchise = (
-    currentUser?.role === 'admin' && 
-    currentUser?.email === 'wadevenga@hotmail.com'
-  ) || isSuperAdmin() || currentUser?.role === 'franchise_admin';
+    currentUser?.organization_id === 'pdi-tech-001' && 
+    (currentUser?.role === 'super_admin' || currentUser?.role === 'franchise_admin' || currentUser?.role === 'admin')
+  ) || isSuperAdmin();
 
   const handleLogout = async () => {
     await logout();

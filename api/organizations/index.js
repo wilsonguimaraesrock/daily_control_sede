@@ -83,20 +83,29 @@ async function handlePost(req, res, user) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Test minimal organization creation
+    // Support both SCHOOL and DEPARTMENT types
+    const { type = 'SCHOOL' } = req.body; // Default to SCHOOL if not specified
     const orgId = `${code.toLowerCase()}-${Date.now()}`;
-    console.log('🔧 Creating organization with ID:', orgId);
+    console.log('🔧 Creating organization with ID:', orgId, 'Type:', type);
     
     const organization = await prisma.organization.create({
       data: {
         id: orgId,
         name,
         code,
-        type: 'SCHOOL'
+        type,
+        settings: {
+          branding: {
+            logo: '/assets/rockfeller-logo.png',
+            title: `Daily Control - ${name}`
+          },
+          canEditDueDates: true,
+          allowPrivateTasks: true
+        }
       }
     });
     
-    console.log('✅ Minimal organization created:', organization);
+    console.log('✅ Organization created:', organization);
 
     console.log(`✅ Organization created successfully: ${name}`);
 

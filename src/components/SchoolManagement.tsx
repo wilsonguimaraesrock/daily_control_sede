@@ -69,6 +69,7 @@ interface SchoolData {
   code: string;
   adminName: string;
   adminEmail: string;
+  type: 'SCHOOL' | 'DEPARTMENT';
   settings: {
     canEditDueDates: boolean;
     allowPrivateTasks: boolean;
@@ -118,6 +119,7 @@ export const SchoolManagement: React.FC = () => {
     code: '',
     adminName: '',
     adminEmail: '',
+    type: 'SCHOOL', // Add type field
     settings: {
       canEditDueDates: true,
       allowPrivateTasks: false,
@@ -255,6 +257,7 @@ export const SchoolManagement: React.FC = () => {
       code: '',
       adminName: '',
       adminEmail: '',
+      type: 'SCHOOL',
       settings: {
         canEditDueDates: true,
         allowPrivateTasks: false,
@@ -324,7 +327,7 @@ export const SchoolManagement: React.FC = () => {
       const organization = await createOrganization({
         name: formData.name,
         code: formData.code,
-        type: 'SCHOOL',
+        type: formData.type,
         settings: formData.settings
       });
 
@@ -505,7 +508,7 @@ export const SchoolManagement: React.FC = () => {
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
               <Plus className="h-4 w-4 mr-2" />
-              Nova Escola
+              Nova Escola/Departamento
             </Button>
           </DialogTrigger>
           
@@ -513,7 +516,7 @@ export const SchoolManagement: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <School className="h-5 w-5 text-blue-600" />
-                Cadastrar Nova Escola
+                Cadastrar Nova Escola/Departamento
               </DialogTitle>
             </DialogHeader>
             
@@ -521,23 +524,41 @@ export const SchoolManagement: React.FC = () => {
               {/* School Info */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="schoolName">Nome da Escola *</Label>
+                  <Label htmlFor="schoolName">Nome da Escola/Departamento *</Label>
                   <Input
                     id="schoolName"
                     value={formData.name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder="Ex: Rockfeller Centro"
+                    placeholder="Ex: Rockfeller Centro, Departamento PED"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="schoolCode">Código da Escola</Label>
+                  <Label htmlFor="schoolCode">Código da Escola/Departamento</Label>
                   <Input
                     id="schoolCode"
                     value={formData.code}
                     onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
-                    placeholder="Ex: RFC001"
+                    placeholder="Ex: RFC001, PED001, COM001"
                   />
+                </div>
+                
+                <div>
+                  <Label htmlFor="organizationType">Tipo de Organização</Label>
+                  <Select 
+                    value={formData.type} 
+                    onValueChange={(value: 'SCHOOL' | 'DEPARTMENT') => 
+                      setFormData(prev => ({ ...prev, type: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SCHOOL">🏫 Escola</SelectItem>
+                      <SelectItem value="DEPARTMENT">🏢 Departamento</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div>
@@ -597,7 +618,7 @@ export const SchoolManagement: React.FC = () => {
                 Cancelar
               </Button>
               <Button onClick={handleCreateSchool} disabled={loading}>
-                {loading ? 'Criando...' : 'Criar Escola'}
+                {loading ? 'Criando...' : `Criar ${formData.type === 'DEPARTMENT' ? 'Departamento' : 'Escola'}`}
               </Button>
             </DialogFooter>
           </DialogContent>

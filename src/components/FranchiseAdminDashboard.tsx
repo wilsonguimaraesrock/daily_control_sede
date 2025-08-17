@@ -70,8 +70,13 @@ export const FranchiseAdminDashboard: React.FC = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [recentUsers, setRecentUsers] = useState<User[]>([]);
 
-  // Only show for super admin and franchise admin
-  if (!isSuperAdmin() && currentUser?.role !== 'franchise_admin') {
+  // Only show for PD&I organization users with proper roles
+  const canAccessFranchise = (
+    currentUser?.organization_id === 'pdi-tech-001' && 
+    (currentUser?.role === 'super_admin' || currentUser?.role === 'franchise_admin' || currentUser?.role === 'admin')
+  ) || isSuperAdmin();
+  
+  if (!canAccessFranchise) {
     return null;
   }
 

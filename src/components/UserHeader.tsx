@@ -18,12 +18,11 @@ const UserHeader: React.FC = () => {
   // Dynamic title based on organization
   const pageTitle = getOrganizationTitle(currentOrganization);
   
-  // Show franchise dashboard link for super admin
-  // Temporary: Use admin role + specific email until PostgreSQL migration
+  // Show franchise dashboard link only for PD&I organization
   const showFranchiseAccess = (
-    currentUser.role === 'admin' && 
-    currentUser.email === 'wadevenga@hotmail.com'
-  ) || isSuperAdmin() || currentUser.role === 'franchise_admin';
+    currentUser.organization_id === 'pdi-tech-001' && 
+    (currentUser.role === 'super_admin' || currentUser.role === 'franchise_admin' || currentUser.role === 'admin')
+  ) || isSuperAdmin();
 
   return (
     <Card className="mb-6 border bg-primary text-primary-foreground dark:bg-slate-800/50 dark:border-slate-700">
