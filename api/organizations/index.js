@@ -149,17 +149,8 @@ async function handlePost(req, res, user) {
         }
       });
 
-      // Create password reset record
-      await tx.passwordReset.create({
-        data: {
-          id: `reset-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-          organizationId: organization.id,
-          userId: admin.id,
-          newPassword: temporaryPassword, // Store the plain text password for reference
-          temporaryPassword: hashedPassword,
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-        }
-      });
+      // Skip password reset for now - focus on department creation
+      console.log(`🔑 Admin password for ${adminEmail}: ${temporaryPassword}`);
 
       return { organization, admin, temporaryPassword };
     });
