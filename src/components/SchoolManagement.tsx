@@ -1,31 +1,32 @@
 /**
  * ===================================================================
- * GERENCIAMENTO AVANÇADO DE ESCOLAS - FRANQUEADORA ROCKFELLER
+ * GERENCIAMENTO DE ORGANIZAÇÕES - FRANQUEADORA ROCKFELLER
  * ===================================================================
  * 
- * Componente responsável pela gestão completa de escolas no sistema
- * multi-tenant. Permite ao franqueador e super admins gerenciar
- * todas as 105+ escolas da rede Rockfeller.
+ * Componente responsável pela gestão completa de escolas e departamentos
+ * no sistema multi-tenant. Permite ao franqueador e super admins gerenciar
+ * todas as organizações da rede Rockfeller.
  * 
  * Funcionalidades implementadas:
- * - ✅ Criação de escolas com admin automático
+ * - ✅ Criação de escolas e departamentos com admin automático
  * - ✅ Visualização de informações detalhadas
- * - ✅ Configuração de parâmetros por escola
+ * - ✅ Configuração de parâmetros por organização
  * - ✅ Exclusão segura com validações
  * - ✅ Gestão de credenciais de admin
- * - ✅ Senhas temporárias com botão de reset
+ * - ✅ Senhas temporárias automáticas
  * - ✅ Estatísticas em tempo real (usuários/tarefas)
  * - ✅ Cards colapsáveis ordenados alfabeticamente
  * - ✅ Interface responsiva mobile/desktop
+ * - ✅ Departamentos independentes com isolamento total
  * 
  * Segurança:
  * - Validação de permissões por role
- * - Isolamento de dados por organização
+ * - Isolamento completo de dados por organização
  * - Senhas criptografadas com bcrypt
  * - Logs de atividade para auditoria
  * 
  * @author Wade Venga
- * @version 2.0.0
+ * @version 3.0.0
  * @updated August 2024
  * ===================================================================
  */
@@ -344,8 +345,8 @@ export const SchoolManagement: React.FC = () => {
       const passwordReset = await generateTemporaryPassword(adminUser.user_id);
 
       toast({
-        title: "Escola criada com sucesso!",
-        description: `${formData.name} foi criada com admin: ${formData.adminEmail}`,
+        title: `${formData.type === 'DEPARTMENT' ? 'Departamento' : 'Escola'} criado com sucesso!`,
+        description: `${formData.name} foi criado com admin: ${formData.adminEmail}`,
       });
 
       // Show password in a separate dialog
@@ -498,25 +499,41 @@ export const SchoolManagement: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Gerenciamento de Escolas</h2>
+          <h2 className="text-2xl font-bold">Gerenciamento de Organizações</h2>
           <p className="text-muted-foreground">
-            Cadastre e gerencie escolas da franqueadora Rockfeller
+            Cadastre e gerencie escolas e departamentos da franqueadora Rockfeller
           </p>
         </div>
         
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Escola/Departamento
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-3">
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => { resetForm(); setFormData(prev => ({ ...prev, type: 'SCHOOL' })); }}>
+                <School className="h-4 w-4 mr-2" />
+                Nova Escola
+              </Button>
+            </DialogTrigger>
+          </Dialog>
           
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => { resetForm(); setFormData(prev => ({ ...prev, type: 'DEPARTMENT' })); }}>
+                <Building2 className="h-4 w-4 mr-2" />
+                Novo Departamento
+              </Button>
+            </DialogTrigger>
+          </Dialog>
+        </div>
+        
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <School className="h-5 w-5 text-blue-600" />
-                Cadastrar Nova Escola/Departamento
+                {formData.type === 'DEPARTMENT' ? (
+                  <Building2 className="h-5 w-5 text-orange-600" />
+                ) : (
+                  <School className="h-5 w-5 text-blue-600" />
+                )}
+                {formData.type === 'DEPARTMENT' ? 'Cadastrar Novo Departamento' : 'Cadastrar Nova Escola'}
               </DialogTitle>
             </DialogHeader>
             
@@ -524,42 +541,48 @@ export const SchoolManagement: React.FC = () => {
               {/* School Info */}
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="schoolName">Nome da Escola/Departamento *</Label>
+                  <Label htmlFor="schoolName">
+                    Nome {formData.type === 'DEPARTMENT' ? 'do Departamento' : 'da Escola'} *
+                  </Label>
                   <Input
                     id="schoolName"
                     value={formData.name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder="Ex: Rockfeller Centro, Departamento PED"
+                    placeholder={formData.type === 'DEPARTMENT' ? 
+                      "Ex: Departamento Pedagógico, Departamento Comercial" : 
+                      "Ex: Rockfeller Centro, Escola Navegantes"
+                    }
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="schoolCode">Código da Escola/Departamento</Label>
+                  <Label htmlFor="schoolCode">
+                    Código {formData.type === 'DEPARTMENT' ? 'do Departamento' : 'da Escola'}
+                  </Label>
                   <Input
                     id="schoolCode"
                     value={formData.code}
                     onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
-                    placeholder="Ex: RFC001, PED001, COM001"
+                    placeholder={formData.type === 'DEPARTMENT' ? 
+                      "Ex: PED001, COM001, MKT001" : 
+                      "Ex: RFC001, RFC002, NAV001"
+                    }
                   />
                 </div>
                 
-                <div>
-                  <Label htmlFor="organizationType">Tipo de Organização</Label>
-                  <Select 
-                    value={formData.type} 
-                    onValueChange={(value: 'SCHOOL' | 'DEPARTMENT') => 
-                      setFormData(prev => ({ ...prev, type: value }))
+                <Alert className={formData.type === 'DEPARTMENT' ? 'border-orange-200 bg-orange-50' : 'border-blue-200 bg-blue-50'}>
+                  {formData.type === 'DEPARTMENT' ? (
+                    <Building2 className="h-4 w-4 text-orange-600" />
+                  ) : (
+                    <School className="h-4 w-4 text-blue-600" />
+                  )}
+                  <AlertDescription className="text-sm">
+                    {formData.type === 'DEPARTMENT' ? 
+                      'Criando um departamento independente com admin próprio e login separado.' :
+                      'Criando uma escola da rede Rockfeller com admin próprio.'
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SCHOOL">🏫 Escola</SelectItem>
-                      <SelectItem value="DEPARTMENT">🏢 Departamento</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  </AlertDescription>
+                </Alert>
                 
                 <div>
                   <Label htmlFor="schoolTitle">Título do Sistema</Label>
@@ -576,7 +599,10 @@ export const SchoolManagement: React.FC = () => {
                         }
                       }
                     }))}
-                    placeholder="Daily Control - Nome da Escola"
+                    placeholder={formData.type === 'DEPARTMENT' ? 
+                      "Daily Control - Departamento" : 
+                      "Daily Control - Nome da Escola"
+                    }
                   />
                 </div>
               </div>
@@ -600,7 +626,10 @@ export const SchoolManagement: React.FC = () => {
                     type="email"
                     value={formData.adminEmail}
                     onChange={(e) => setFormData(prev => ({ ...prev, adminEmail: e.target.value }))}
-                    placeholder="admin@escola.com.br"
+                    placeholder={formData.type === 'DEPARTMENT' ? 
+                      "departamento@rockfeller.com.br" : 
+                      "admin@escola.com.br"
+                    }
                   />
                 </div>
                 
