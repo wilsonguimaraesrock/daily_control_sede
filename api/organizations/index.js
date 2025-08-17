@@ -85,33 +85,93 @@ async function handlePost(req, res, user) {
 
     // Support both SCHOOL and DEPARTMENT types
     const { type = 'SCHOOL' } = req.body; // Default to SCHOOL if not specified
-    const orgId = `${code.toLowerCase()}-${Date.now()}`;
-    console.log('🔧 Creating organization with ID:', orgId, 'Type:', type);
     
-    const organization = await prisma.organization.create({
-      data: {
-        id: orgId,
-        name,
-        code,
-        type,
-        settings: {
-          branding: {
-            logo: '/assets/rockfeller-logo.png',
-            title: `Daily Control - ${name}`
-          },
-          canEditDueDates: true,
-          allowPrivateTasks: true
-        }
-      }
+    // Check if organization code or admin email already exists
+    const existingOrg = await prisma.organization.findUnique({
+      where: { code }
     });
-    
-    console.log('✅ Organization created:', organization);
 
-    console.log(`✅ Organization created successfully: ${name}`);
+    const existingUser = await prisma.userProfile.findUnique({
+      where: { email: adminEmail }
+    });
+
+    if (existingOrg) {
+      return res.status(400).json({ error: 'Organization code already exists' });
+    }
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Admin email already exists' });
+    }
+
+    // Create organization and admin user in transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const orgId = `${code.toLowerCase()}-${Date.now()}`;
+      console.log('🔧 Creating organization with ID:', orgId, 'Type:', type);
+      
+      // Create organization
+      const organization = await tx.organization.create({
+        data: {
+          id: orgId,
+          name,
+          code,
+          type,
+          settings: {
+            branding: {
+              logo: '/assets/rockfeller-logo.png',
+              title: `Daily Control - ${name}`
+            },
+            canEditDueDates: true,
+            allowPrivateTasks: true
+          }
+        }
+      });
+
+      // Generate temporary password  
+      const temporaryPassword = Math.floor(Math.random() * 900000 + 100000).toString();
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.default.hash(temporaryPassword, 10);
+
+      // Create admin user - role based on organization type
+      const adminRole = type === 'DEPARTMENT' ? 'franqueado' : 'admin';
+      
+      const admin = await tx.userProfile.create({
+        data: {
+          id: `user-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          email: adminEmail,
+          name: adminName,
+          role: adminRole,
+          organizationId: organization.id,
+          passwordHash: hashedPassword,
+          firstLoginCompleted: false
+        }
+      });
+
+      // Create password reset record
+      await tx.passwordReset.create({
+        data: {
+          id: `reset-${Date.now()}-${Math.random().toString(36).substring(2)}`,
+          organizationId: organization.id,
+          userId: admin.id,
+          temporaryPassword: hashedPassword,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+        }
+      });
+
+      return { organization, admin, temporaryPassword };
+    });
+
+    console.log(`✅ ${type} created: ${name} (${code}) with admin ${adminEmail}`);
 
     res.status(201).json({
-      organization,
-      message: 'Organization created successfully - admin user creation skipped for testing'
+      organization: result.organization,
+      admin: {
+        id: result.admin.id,
+        name: result.admin.name,
+        email: result.admin.email,
+        role: result.admin.role,
+        temporaryPassword: result.temporaryPassword
+      },
+      message: `${type === 'DEPARTMENT' ? 'Departamento' : 'Escola'} criado com sucesso!`
     });
 
   } catch (error) {
