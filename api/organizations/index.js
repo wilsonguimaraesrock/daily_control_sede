@@ -119,16 +119,15 @@ async function handlePost(req, res, user) {
         }
       });
 
-      // Generate temporary password
-      const crypto = await import('crypto');
-      const temporaryPassword = crypto.randomInt(100000, 999999).toString();
+      // Generate temporary password  
+      const temporaryPassword = Math.floor(Math.random() * 900000 + 100000).toString();
       const bcrypt = await import('bcryptjs');
-      const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+      const hashedPassword = await bcrypt.default.hash(temporaryPassword, 10);
 
       // Create admin user
       const admin = await tx.userProfile.create({
         data: {
-          id: crypto.randomUUID(),
+          id: `user-${Date.now()}-${Math.random().toString(36).substring(2)}`,
           email: adminEmail,
           name: adminName,
           role: 'franqueado',
@@ -141,7 +140,7 @@ async function handlePost(req, res, user) {
       // Create password reset record
       await tx.passwordReset.create({
         data: {
-          id: crypto.randomUUID(),
+          id: `reset-${Date.now()}-${Math.random().toString(36).substring(2)}`,
           organizationId: organization.id,
           userId: admin.id,
           temporaryPassword: hashedPassword,
