@@ -77,93 +77,44 @@ async function handlePost(req, res, user) {
     }
 
     const { name, code, adminName, adminEmail } = req.body;
+    console.log('🏫 Attempting to create organization:', { name, code, adminName, adminEmail });
 
     if (!name || !code || !adminName || !adminEmail) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Check if organization code or admin email already exists
-    const existingOrg = await prisma.organization.findUnique({
-      where: { code }
-    });
-
-    const existingUser = await prisma.userProfile.findUnique({
-      where: { email: adminEmail }
-    });
-
-    if (existingOrg) {
-      return res.status(400).json({ error: 'Organization code already exists' });
-    }
-
-    if (existingUser) {
-      return res.status(400).json({ error: 'Admin email already exists' });
-    }
-
-    // Create organization and admin user in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create organization
-      const organization = await tx.organization.create({
-        data: {
-          id: `${code.toLowerCase()}-${Date.now()}`,
-          name,
-          code,
-          type: 'SCHOOL',
-          settings: {
-            branding: {
-              logo: '/assets/rockfeller-logo.png',
-              title: `Daily Control - ${name}`
-            },
-            canEditDueDates: true,
-            allowPrivateTasks: true
-          }
+    // Just create a simple organization first - skip admin user for testing
+    const organization = await prisma.organization.create({
+      data: {
+        id: `${code.toLowerCase()}-${Date.now()}`,
+        name,
+        code,
+        type: 'SCHOOL',
+        settings: {
+          branding: {
+            logo: '/assets/rockfeller-logo.png',
+            title: `Daily Control - ${name}`
+          },
+          canEditDueDates: true,
+          allowPrivateTasks: true
         }
-      });
-
-      // Generate temporary password  
-      const temporaryPassword = Math.floor(Math.random() * 900000 + 100000).toString();
-      const bcrypt = await import('bcryptjs');
-      const hashedPassword = await bcrypt.default.hash(temporaryPassword, 10);
-
-      // Create admin user
-      const admin = await tx.userProfile.create({
-        data: {
-          id: `user-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-          email: adminEmail,
-          name: adminName,
-          role: 'franqueado',
-          organizationId: organization.id,
-          passwordHash: hashedPassword,
-          firstLoginCompleted: false
-        }
-      });
-
-      // Create password reset record
-      await tx.passwordReset.create({
-        data: {
-          id: `reset-${Date.now()}-${Math.random().toString(36).substring(2)}`,
-          organizationId: organization.id,
-          userId: admin.id,
-          temporaryPassword: hashedPassword,
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-        }
-      });
-
-      return { organization, admin, temporaryPassword };
-    });
-
-    console.log(`🏫 School created: ${name} (${code}) with admin ${adminEmail}`);
-
-    res.status(201).json({
-      organization: result.organization,
-      admin: {
-        ...result.admin,
-        temporaryPassword: result.temporaryPassword
       }
     });
 
+    console.log(`✅ Organization created successfully: ${name}`);
+
+    res.status(201).json({
+      organization,
+      message: 'Organization created successfully - admin user creation skipped for testing'
+    });
+
   } catch (error) {
-    console.error('Create organization error:', error);
-    res.status(500).json({ error: 'Failed to create organization' });
+    console.error('💥 Create organization error:', error);
+    res.status(500).json({ 
+      error: 'Failed to create organization',
+      message: error.message,
+      details: error.toString()
+    });
   } finally {
     await prisma.$disconnect();
   }
