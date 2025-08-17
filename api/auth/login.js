@@ -41,11 +41,7 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Update last login
-    await prisma.userProfile.update({
-      where: { id: user.id },
-      data: { lastLogin: new Date() }
-    });
+    // Skip last login update for now - focus on login working
 
     // Generate JWT token
     const token = jwt.sign(
