@@ -1,46 +1,113 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
 export default async function handler(req, res) {
+  console.log('🚀 LOGIN API CALLED - Version: FULL_PRISMA_v3');
+  
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const prisma = new PrismaClient();
+
   try {
     const { email, password } = req.body;
+    console.log('📧 Login attempt for:', email);
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Test Prisma connection
-    const prisma = new PrismaClient();
-    
-    try {
-      // Simple test - just try to connect
-      await prisma.$connect();
-      
-      res.status(200).json({
-        message: 'Login endpoint with Prisma connection working',
-        email: email,
-        timestamp: new Date().toISOString(),
-        database: 'Connected successfully',
-        platform: 'vercel'
-      });
-      
-    } catch (dbError) {
-      res.status(500).json({
-        error: 'Database connection failed',
-        message: dbError.message,
-        timestamp: new Date().toISOString()
-      });
-    } finally {
-      await prisma.$disconnect();
+    // Find user with organization
+    const user = await prisma.userProfile.findUnique({
+      where: { email },
+      include: {
+        organization: true
+      }
+    });
+
+    if (!user || !user.isActive) {
+      console.log('❌ User not found or inactive:', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.passwordHash || '');
+    if (!isValidPassword) {
+      console.log('❌ Invalid password for:', email);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Update last login
+    await prisma.userProfile.update({
+      where: { id: user.id },
+      data: { updatedAt: new Date() }
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        id: user.id,
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+        organization_id: user.organizationId
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Prepare responses
+    const userResponse = {
+      id: user.id,
+      user_id: user.id,
+      organization_id: user.organizationId,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      is_active: user.isActive,
+      created_at: user.createdAt,
+      last_login: new Date(),
+      first_login_completed: user.firstLoginCompleted
+    };
+
+    const organizationResponse = {
+      id: user.organization.id,
+      name: user.organization.name,
+      code: user.organization.code,
+      type: user.organization.type,
+      settings: user.organization.settings || {
+        branding: {
+          logo: '/assets/rockfeller-logo.png',
+          title: `Daily Control - ${user.organization.name}`
+        },
+        canEditDueDates: true,
+        allowPrivateTasks: true
+      },
+      isActive: user.organization.isActive,
+      createdAt: user.organization.createdAt,
+      updatedAt: user.organization.updatedAt
+    };
+
+    console.log('✅ Login successful:', email, '- Role:', user.role);
+
+    res.status(200).json({
+      user: userResponse,
+      organization: organizationResponse,
+      token
+    });
+
   } catch (error) {
+    console.error('💥 Login error:', error);
     res.status(500).json({ 
       error: 'Internal server error',
-      message: error.message 
+      message: error.message,
+      timestamp: new Date().toISOString()
     });
+  } finally {
+    await prisma.$disconnect();
   }
 }
