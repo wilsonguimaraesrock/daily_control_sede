@@ -99,6 +99,7 @@ export default async function handler(req, res) {
           id: `reset-${Date.now()}-${Math.random().toString(36).substring(2)}`,
           organizationId: targetOrgId,
           userId: newUser.id,
+          newPassword: temporaryPassword, // Store the plain text password for reference
           temporaryPassword: hashedPassword,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
         }

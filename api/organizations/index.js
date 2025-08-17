@@ -155,6 +155,7 @@ async function handlePost(req, res, user) {
           id: `reset-${Date.now()}-${Math.random().toString(36).substring(2)}`,
           organizationId: organization.id,
           userId: admin.id,
+          newPassword: temporaryPassword, // Store the plain text password for reference
           temporaryPassword: hashedPassword,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
         }
