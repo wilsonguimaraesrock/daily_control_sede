@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     // Update last login
     await prisma.userProfile.update({
       where: { id: user.id },
-      data: { updatedAt: new Date() }
+      data: { lastLogin: new Date() }
     });
 
     // Generate JWT token
