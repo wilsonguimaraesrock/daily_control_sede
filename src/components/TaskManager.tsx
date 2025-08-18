@@ -125,7 +125,7 @@ const TaskManager = () => {
         ).length;
       case 'overdue':
         return tasks.filter(task => 
-          task.dueDate && new Date(task.dueDate) < today && task.status !== 'concluida'
+          task.dueDate && new Date(task.dueDate) < today && task.status?.toLowerCase() !== 'concluida'
         ).length;
       default:
         return 0;
@@ -836,7 +836,7 @@ const TaskManager = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/90 text-sm font-bold">Pendentes</p>
-                  <p className="text-3xl font-bold text-white">{filteredTasks.filter(t => t.status === 'pendente').length}</p>
+                  <p className="text-3xl font-bold text-white">{filteredTasks.filter(t => t.status?.toLowerCase() === 'pendente').length}</p>
                 </div>
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center ring-1 ring-white/30">
                   <Clock className="w-6 h-6 text-white" />
@@ -848,7 +848,7 @@ const TaskManager = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-yellow-400 text-sm font-bold">Pendentes</p>
-                  <p className="text-3xl font-bold text-yellow-400">{filteredTasks.filter(t => t.status === 'pendente').length}</p>
+                  <p className="text-3xl font-bold text-yellow-400">{filteredTasks.filter(t => t.status?.toLowerCase() === 'pendente').length}</p>
                 </div>
                 <div className="w-12 h-12 bg-slate-700/70 rounded-full flex items-center justify-center">
                   <Clock className="w-6 h-6 text-yellow-400" />
@@ -866,7 +866,7 @@ const TaskManager = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-white/80 text-sm font-bold">Concluídas</p>
-                  <p className="text-3xl font-bold">{tasks.filter(t => t.status === 'concluida' && t.due_date && (() => { const d = new Date(t.due_date as any); const now = new Date(); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })()).length}</p>
+                  <p className="text-3xl font-bold">{tasks.filter(t => t.status?.toLowerCase() === 'concluida' && ((t as any).dueDate || t.due_date) && (() => { const dueDate = (t as any).dueDate || t.due_date; const d = new Date(dueDate); const now = new Date(); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })()).length}</p>
                 </div>
                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center ring-1 ring-white/30">
                   <CheckCircle className="w-6 h-6 text-white" />
@@ -878,7 +878,7 @@ const TaskManager = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-400 text-sm font-bold">Concluídas</p>
-                  <p className="text-3xl font-bold text-green-400">{tasks.filter(t => t.status === 'concluida' && t.due_date && (() => { const d = new Date(t.due_date as any); const now = new Date(); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })()).length}</p>
+                  <p className="text-3xl font-bold text-green-400">{tasks.filter(t => t.status?.toLowerCase() === 'concluida' && ((t as any).dueDate || t.due_date) && (() => { const dueDate = (t as any).dueDate || t.due_date; const d = new Date(dueDate); const now = new Date(); return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth(); })()).length}</p>
                 </div>
                 <div className="w-12 h-12 bg-slate-700/70 rounded-full flex items-center justify-center">
                   <CheckCircle className="w-6 h-6 text-green-400" />
