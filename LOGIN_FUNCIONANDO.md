@@ -6,11 +6,17 @@
 
 ## 🔐 **CREDENCIAIS DE LOGIN:**
 
-### 👤 **ADMINISTRADOR PRINCIPAL:**
+### 👤 **SUPER ADMINISTRADOR:**
+- **📧 Email:** `wadevenga@hotmail.com`
+- **🔑 Senha:** `S@lmos2714`
+- **🎭 Role:** `super_admin`
+- **🏢 Organização:** PD&I Tech
+
+### 👤 **ADMINISTRADOR TESTE (alternativo):**
 - **📧 Email:** `admin@teste.com`
 - **🔑 Senha:** `123456`
-- **🎭 Role:** `admin`
-- **🏢 Organização:** Sistema (fallback automático)
+- **🎭 Role:** `super_admin`
+- **🏢 Organização:** PD&I Tech
 
 ---
 
@@ -21,9 +27,10 @@ https://daily-control-sede.vercel.app
 
 ### ✅ **TESTE DE LOGIN:**
 1. Acesse a URL acima
-2. Use as credenciais: `admin@teste.com` / `123456`
+2. Use suas credenciais reais: `wadevenga@hotmail.com` / `S@lmos2714`
 3. ✅ **Login funcionará perfeitamente**
-4. ✅ **Sistema totalmente operacional**
+4. ✅ **Aba "Franqueadora" estará visível**
+5. ✅ **Sistema totalmente operacional**
 
 ---
 
