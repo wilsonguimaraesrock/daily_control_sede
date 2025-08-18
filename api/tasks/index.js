@@ -20,6 +20,7 @@ function authenticateToken(req) {
 }
 
 export default async function handler(req, res) {
+  // CACHE BUSTER - v2024.01.29.001
   console.log('🚀 TASKS API CALLED - Method:', req.method);
 
   const authResult = authenticateToken(req);
@@ -92,18 +93,30 @@ export default async function handler(req, res) {
       const priorityMap = {
         'baixa': 'BAIXA',
         'media': 'MEDIA', 
-        'urgente': 'URGENTE'
+        'urgente': 'URGENTE',
+        'BAIXA': 'BAIXA',
+        'MEDIA': 'MEDIA',
+        'URGENTE': 'URGENTE'
+      };
+
+      const statusMap = {
+        'pendente': 'PENDENTE',
+        'em_andamento': 'EM_ANDAMENTO',
+        'concluida': 'CONCLUIDA',
+        'cancelada': 'CANCELADA'
       };
 
       const mappedPriority = priorityMap[priority] || 'MEDIA';
+      const mappedStatus = statusMap['pendente'] || 'PENDENTE';
       console.log('🔄 Priority mapping:', priority, '->', mappedPriority);
+      console.log('🔄 Status mapping: pendente ->', mappedStatus);
 
       const newTask = await prisma.task.create({
         data: {
           title,
           description: description || '',
           priority: mappedPriority,
-          status: 'PENDENTE',
+          status: mappedStatus,
           dueDate: dueDate ? new Date(dueDate) : null,
           createdBy: user.id,
           organizationId: user.organization_id,
@@ -160,4 +173,4 @@ export default async function handler(req, res) {
   } finally {
     await prisma.$disconnect();
   }
-}// Force cache clear
+}
