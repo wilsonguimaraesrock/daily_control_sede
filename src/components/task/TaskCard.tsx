@@ -91,32 +91,37 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Informações do criador e atribuição */}
         <div className="space-y-1">
-          {/* Criador da tarefa */}
-          {task.created_by && (
+          {/* Criador da tarefa - suporte para ambos formatos: createdBy (API) e created_by (frontend) */}
+          {((task as any).createdBy || task.created_by) && (
             <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
               <UserPlus className="w-3 h-3" />
-              <span className="text-xs">Criado por: <span className="text-blue-600 font-medium dark:text-blue-400">{getUserName(task.created_by)}</span></span>
+              <span className="text-xs">Criado por: <span className="text-blue-600 font-medium dark:text-blue-400">{getUserName((task as any).createdBy || task.created_by)}</span></span>
             </div>
           )}
           
-          {/* Usuários atribuídos */}
-          {task.assigned_users && task.assigned_users.length > 0 && (
-            <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
-              <Users className="w-3 h-3" />
-              <span className="text-xs">Atribuído: {task.assigned_users.map(userId => getUserName(userId)).join(', ')}</span>
-            </div>
-          )}
+          {/* Usuários atribuídos - suporte para assignments (API) e assigned_users (frontend) */}
+          {(() => {
+            // Tentar assignments (formato da API) primeiro, depois assigned_users (formato frontend)
+            const assignedUserIds = (task as any).assignments?.map((assignment: any) => assignment.user?.userId || assignment.user?.id) || task.assigned_users || [];
+            
+            return assignedUserIds.length > 0 && (
+              <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
+                <Users className="w-3 h-3" />
+                <span className="text-xs">Atribuído: {assignedUserIds.map((userId: string) => getUserName(userId)).join(', ')}</span>
+              </div>
+            );
+          })()}
         </div>
 
-        {/* Histórico de edição */}
-        {task.edited_by && task.edited_at && (
+        {/* Histórico de edição - suporte para ambos formatos */}
+        {(((task as any).editedBy || task.edited_by) && ((task as any).editedAt || task.edited_at)) && (
           <div className="pt-2 border-t border-border dark:border-slate-600/50">
             <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
               <History className="w-3 h-3" />
               <span className="text-xs">
-                Editado por <span className="text-amber-600 font-medium dark:text-amber-400">{getUserName(task.edited_by)}</span> em{' '}
+                Editado por <span className="text-amber-600 font-medium dark:text-amber-400">{getUserName((task as any).editedBy || task.edited_by)}</span> em{' '}
                 <span className="text-foreground/80 dark:text-slate-300">
-                  {task.edited_at.toLocaleDateString('pt-BR')} às {task.edited_at.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  {((task as any).editedAt || task.edited_at)?.toLocaleDateString('pt-BR')} às {((task as any).editedAt || task.edited_at)?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </span>
             </div>

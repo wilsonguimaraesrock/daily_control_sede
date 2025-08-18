@@ -269,26 +269,31 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
               )}
             </div>
 
-            {task.assigned_users && task.assigned_users.length > 0 && (
-              <div>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-slate-300 mb-2">
-                  <Users className="w-4 h-4 flex-shrink-0" />
-                  <span>Atribuído a:</span>
+            {(() => {
+              // Suporte para assignments (API) e assigned_users (frontend)
+              const assignedUserIds = (task as any).assignments?.map((assignment: any) => assignment.user?.userId || assignment.user?.id) || task.assigned_users || [];
+              
+              return assignedUserIds.length > 0 && (
+                <div>
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-slate-300 mb-2">
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    <span>Atribuído a:</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground dark:text-slate-400">
+                    {assignedUserIds.map((userId: string) => getUserName(userId)).join(', ')}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground dark:text-slate-400">
-                  {task.assigned_users.map((userId: string) => getUserName(userId)).join(', ')}
-                </p>
-              </div>
-            )}
+              );
+            })()}
             
-            {task.created_by && (
+            {((task as any).createdBy || task.created_by) && (
               <div>
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-slate-300 mb-2">
                   <User className="w-4 h-4 flex-shrink-0" />
                   <span>Criado por:</span>
                 </div>
                 <p className="text-sm text-muted-foreground dark:text-slate-400">
-                  {getUserName(task.created_by)}
+                  {getUserName((task as any).createdBy || task.created_by)}
                 </p>
               </div>
             )}
