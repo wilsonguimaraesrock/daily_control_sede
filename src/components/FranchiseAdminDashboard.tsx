@@ -122,7 +122,7 @@ export const FranchiseAdminDashboard: React.FC = () => {
       // Load real statistics from API
       const statsResponse = await fetch(`${API_BASE_URL}/api/stats/organizations`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
 

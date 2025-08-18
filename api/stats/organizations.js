@@ -39,8 +39,10 @@ export default async function handler(req, res) {
   }
   const { user } = authResult;
 
-  // Only super admin and franchise admin can access global stats
-  if (user.role !== 'super_admin' && user.role !== 'franchise_admin') {
+  // Only super admin, franchise admin, and PD&I Tech admins can access global stats
+  if (user.role !== 'super_admin' && 
+      user.role !== 'franchise_admin' && 
+      !(user.role === 'admin' && user.organization_id === 'pdi-tech-001')) {
     return res.status(403).json({ error: 'Insufficient permissions' });
   }
 

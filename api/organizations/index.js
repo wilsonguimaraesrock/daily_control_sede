@@ -49,7 +49,10 @@ async function handleGet(req, res, user) {
     let whereClause = {};
 
     // Non-super-admin users only see their organization
-    if (user.role !== 'super_admin' && user.role !== 'franchise_admin') {
+    // Exception: admins in PD&I Tech organization can see all organizations
+    if (user.role !== 'super_admin' && 
+        user.role !== 'franchise_admin' && 
+        !(user.role === 'admin' && user.organization_id === 'pdi-tech-001')) {
       whereClause.id = user.organization_id;
     }
 
