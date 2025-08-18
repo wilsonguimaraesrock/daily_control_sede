@@ -17,7 +17,10 @@ export const getStatusColor = (status: string, task?: { due_date?: string; statu
     return 'dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30 bg-red-500 text-white border-red-600';
   }
 
-  switch (status) {
+  // 🔧 FIX: Normalize status to lowercase for comparison
+  const normalizedStatus = status?.toLowerCase();
+
+  switch (normalizedStatus) {
     case 'pendente': return 'dark:bg-yellow-500/20 dark:text-yellow-400 dark:border-yellow-500/30 bg-yellow-500 text-white border-yellow-600';
     case 'em_andamento': return 'dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30 bg-blue-600 text-white border-blue-700';
     case 'concluida': return 'dark:bg-green-500/20 dark:text-green-400 dark:border-green-500/30 bg-green-500 text-white border-green-600';
@@ -44,7 +47,10 @@ export const getStatusLabel = (status: string, task?: { due_date?: string; statu
     return 'Atrasada';
   }
 
-  switch (status) {
+  // 🔧 FIX: Normalize status to lowercase for comparison
+  const normalizedStatus = status?.toLowerCase();
+
+  switch (normalizedStatus) {
     case 'pendente': return 'Pendente';
     case 'em_andamento': return 'Em Andamento';
     case 'concluida': return 'Concluída';

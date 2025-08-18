@@ -41,7 +41,9 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     
     // Botões de status apenas se pode editar
     if (canEdit) {
-      switch (task.status) {
+      // 🔧 FIX: Normalize status to lowercase for comparison
+      const normalizedStatus = task.status?.toLowerCase();
+      switch (normalizedStatus) {
         case 'pendente':
           statusButtons.push(
             <Button
