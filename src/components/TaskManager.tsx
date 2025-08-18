@@ -48,6 +48,7 @@ const TaskManager = () => {
     setSelectedPriority,
     selectedStatus,
     setSelectedStatus,
+    addTask,
     updateTask,
     deleteTask,
     userProfiles,
@@ -149,18 +150,7 @@ const TaskManager = () => {
 
   const canEditTaskFull = canEditTask;
 
-  const createTask = async (taskData: any) => {
-    // Implementação básica - pode ser expandida conforme necessário
-    setIsCreatingTask(true);
-    try {
-      // Aqui você chamaria a API para criar a tarefa
-      // Por enquanto, apenas recarrega as tarefas
-      await loadTasks();
-      setLastUpdateTime(new Date());
-    } finally {
-      setIsCreatingTask(false);
-    }
-  };
+
 
   const canDeleteTask = canEditTask;
 
@@ -337,7 +327,19 @@ const TaskManager = () => {
     
     setIsCreatingTask(true);
     try {
-      const success = await createTask(newTask);
+      // Convert frontend format to API format
+      const taskData = {
+        title: newTask.title,
+        description: newTask.description,
+        priority: newTask.priority,
+        dueDate: newTask.due_date || undefined,
+        assignedUserIds: newTask.assigned_users, // This should be an array of user IDs
+        isPrivate: newTask.is_private
+      };
+
+      console.log('🔍 Sending task data:', taskData);
+      
+      const success = await addTask(taskData);
       if (success) {
         setNewTask({
           title: '',

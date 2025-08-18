@@ -80,6 +80,9 @@ export default async function handler(req, res) {
       // Create task
       const { title, description, priority, dueDate, assignedUserIds, isPrivate } = req.body;
 
+      console.log('📝 Task creation request body:', req.body);
+      console.log('👥 Assigned user IDs received:', assignedUserIds);
+
       if (!title) {
         return res.status(400).json({ error: 'Title is required' });
       }
