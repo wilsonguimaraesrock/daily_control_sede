@@ -188,9 +188,28 @@ const TaskManager = () => {
     is_private: false
   });
 
-  // 🔧 Função helper para obter nome do usuário
+  // 🔧 Função para obter nome do usuário usando userProfiles
+  const getUserName = (userId: string): string => {
+    if (!userId) return 'Usuário não identificado';
+    
+    // Buscar o usuário nos userProfiles
+    const user = userProfiles.find((profile: any) => 
+      profile.id === userId || 
+      profile.user_id === userId || 
+      profile.userId === userId
+    );
+    
+    if (user) {
+      return user.name || user.email || 'Usuário';
+    }
+    
+    // Fallback para mostrar parte do ID
+    return userId.length > 8 ? userId.substring(0, 8) + '...' : userId;
+  };
+
+  // 🔧 Função helper para obter nome do usuário com fallback
   const getUserNameFallback = (userId: string) => {
-    return getUserName(userId) || userId.substring(0, 8) + '...';
+    return getUserName(userId);
   };
 
   // 🔔 MELHORIA: Componente para mostrar status da conexão real-time
@@ -1028,6 +1047,7 @@ const TaskManager = () => {
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
         canDelete={selectedTask ? canDeleteTask(selectedTask) : false}
         isUpdating={!!updatingTask}
+        getUserName={getUserName}
       />
     </div>
   );

@@ -18,6 +18,7 @@ interface TaskDetailsModalProps {
   canEdit: boolean;
   canDelete?: boolean;
   isUpdating: boolean;
+  getUserName: (userId: string) => string;
 }
 
 const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
@@ -28,9 +29,9 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   onDeleteTask,
   canEdit,
   canDelete = false,
-  isUpdating
+  isUpdating,
+  getUserName
 }) => {
-  // getUserName será implementado localmente se necessário
 
   if (!task) return null;
 
