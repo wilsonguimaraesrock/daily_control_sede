@@ -647,10 +647,9 @@ export const SchoolManagement: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
-      {/* Schools List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Schools List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {schools.map((school) => {
           const isExpanded = expandedCards.has(school.id);
           
