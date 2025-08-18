@@ -61,14 +61,26 @@ export default async function handler(req, res) {
       // If not super admin, can only create users in their own organization
       const targetOrgId = user.role === 'super_admin' ? (organizationId || user.organization_id) : user.organization_id;
 
-      // Check if email already exists
+      // Check if email already exists (case insensitive)
+      console.log('🔍 Checking if email exists:', email);
       const existingUser = await prisma.userProfile.findUnique({
-        where: { email }
+        where: { email: email.toLowerCase() }
       });
 
       if (existingUser) {
-        return res.status(400).json({ error: 'Email already exists' });
+        console.log('❌ Email already exists:', existingUser.name, existingUser.email);
+        return res.status(400).json({ 
+          error: 'Email already exists',
+          message: `O email ${email} já está cadastrado para o usuário ${existingUser.name}`,
+          existingUser: {
+            name: existingUser.name,
+            email: existingUser.email,
+            role: existingUser.role
+          }
+        });
       }
+      
+      console.log('✅ Email available:', email);
 
       // Generate temporary password
       const temporaryPassword = Math.floor(Math.random() * 900000 + 100000).toString();
@@ -93,7 +105,7 @@ export default async function handler(req, res) {
         data: {
           id: userId,
           userId: userId, // Add this required field
-          email,
+          email: email.toLowerCase(),
           name,
           role,
           organizationId: targetOrgId,
