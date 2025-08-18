@@ -95,7 +95,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
   };
 
   const getSelectedUserDetails = () => {
-    return availableUsers.filter(user => selectedUsers.includes(user.user_id));
+    return availableUsers.filter(user => selectedUsers.includes(user.userId));
   };
 
   return (
@@ -106,7 +106,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
           <div className="flex flex-wrap gap-2">
             {getSelectedUserDetails().map(user => (
               <Badge 
-                key={user.user_id} 
+                key={user.userId} 
                 className={`${getRoleColor(user.role)} flex items-center gap-1`}
               >
                 {getRoleIcon(user.role)}
@@ -115,7 +115,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 hover:bg-transparent"
-                  onClick={() => handleRemoveUser(user.user_id)}
+                  onClick={() => handleRemoveUser(user.userId)}
                 >
                   <X className="w-3 h-3" />
                 </Button>
@@ -138,13 +138,13 @@ const UserSelector: React.FC<UserSelectorProps> = ({
             <Card className="absolute top-full left-0 right-0 z-50 mt-1 bg-slate-800 border-slate-700 max-h-60 overflow-y-auto">
               <CardContent className="p-2">
                 {filteredUsers
-                  .filter(user => !selectedUsers.includes(user.user_id))
+                  .filter(user => !selectedUsers.includes(user.userId))
                   .map(user => (
                     <Button
-                      key={user.user_id}
+                      key={user.userId}
                       variant="ghost"
                       className="w-full justify-start p-2 h-auto text-left hover:bg-slate-700/50"
-                      onClick={() => handleSelectUser(user.user_id)}
+                      onClick={() => handleSelectUser(user.userId)}
                     >
                       <div className="flex items-center space-x-2">
                         <div className={`p-1 rounded ${getRoleColor(user.role)}`}>
