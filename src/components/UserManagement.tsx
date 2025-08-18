@@ -139,16 +139,22 @@ const UserManagement: React.FC = () => {
       return;
     }
 
-    // Validar email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Validar email - regex mais robusta
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    console.log('🔍 Validating email:', newUser.email);
+    console.log('✅ Email regex test result:', emailRegex.test(newUser.email));
+    
     if (!emailRegex.test(newUser.email)) {
+      console.error('❌ Email validation failed for:', newUser.email);
       toast({
-        title: "Erro",
-        description: "Por favor, insira um email válido",
+        title: "Erro de validação",
+        description: `Email "${newUser.email}" não é válido. Use o formato: usuario@dominio.com`,
         variant: "destructive"
       });
       return;
     }
+    
+    console.log('✅ Email validation passed for:', newUser.email);
 
     setIsCreating(true);
     try {
