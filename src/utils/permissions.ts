@@ -386,7 +386,8 @@ export function generatePermissions(user: User): UserPermissions {
  */
 export function getOrganizationTitle(organization: Organization | undefined): string {
   if (!organization) {
-    return 'Daily Control - Sistema de Gestão';
+    // Durante o carregamento, usar título mais neutro ou manter o último conhecido
+    return document.title.includes('Daily Control') ? document.title : 'Daily Control - Carregando...';
   }
   
   const settings = organization.settings;

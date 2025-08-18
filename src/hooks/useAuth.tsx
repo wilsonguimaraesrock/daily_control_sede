@@ -114,8 +114,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (response.ok) {
-        const user = await response.json();
-        setCurrentUser(user);
+        const data = await response.json();
+        
+        // API retorna { user, organization } - usar ambos
+        if (data.user) {
+          setCurrentUser(data.user);
+        }
+        
+        if (data.organization) {
+          setCurrentOrganization(data.organization);
+          
+          // Update page title immediately
+          if (data.organization.settings?.branding?.title) {
+            document.title = data.organization.settings.branding.title;
+          } else {
+            document.title = `Daily Control - ${data.organization.name}`;
+          }
+        }
       } else {
         localStorage.removeItem('auth_token');
       }
