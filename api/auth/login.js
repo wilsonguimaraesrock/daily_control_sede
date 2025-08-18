@@ -70,7 +70,7 @@ export default async function handler(req, res) {
       first_login_completed: user.firstLoginCompleted
     };
 
-    const organizationResponse = {
+    const organizationResponse = user.organization ? {
       id: user.organization.id,
       name: user.organization.name,
       code: user.organization.code,
@@ -86,6 +86,22 @@ export default async function handler(req, res) {
       isActive: user.organization.isActive,
       createdAt: user.organization.createdAt,
       updatedAt: user.organization.updatedAt
+    } : {
+      id: 'default',
+      name: 'Sistema',
+      code: 'SYS',
+      type: 'SYSTEM',
+      settings: {
+        branding: {
+          logo: '/assets/rockfeller-logo.png',
+          title: 'Daily Control'
+        },
+        canEditDueDates: true,
+        allowPrivateTasks: true
+      },
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     console.log('✅ Login successful:', email, '- Role:', user.role);
