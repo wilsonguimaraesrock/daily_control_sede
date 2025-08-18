@@ -508,8 +508,12 @@ const TaskManager = () => {
       const taskDueDate = (task as any).dueDate || task.due_date;
       if (!taskDueDate) return false;
       
-      const taskDate = new Date(taskDueDate);
-      const taskHour = taskDate.getHours();
+      // 🔧 FIX: Handle timezone correctly for hour comparison
+      const taskDateStr = taskDueDate.split('T')[0]; // "2025-08-18"
+      const taskTimeStr = taskDueDate.split('T')[1] || '00:00:00'; // "00:00:00.000Z"
+      const taskHourFromTime = parseInt(taskTimeStr.split(':')[0]); // Extract hour from time
+      const taskDate = new Date(taskDateStr + 'T12:00:00'); // Local noon for date comparison
+      const taskHour = taskHourFromTime; // Use original hour from the timestamp
       
       const selectedYear = selectedDate.getFullYear();
       const selectedMonth = selectedDate.getMonth();
@@ -532,7 +536,9 @@ const TaskManager = () => {
       const taskDueDate = (task as any).dueDate || task.due_date;
       if (!taskDueDate) return false;
       
-      const taskDate = new Date(taskDueDate);
+      // 🔧 FIX: Compare only date part, ignore timezone
+      const taskDateStr = taskDueDate.split('T')[0]; // "2025-08-18"
+      const taskDate = new Date(taskDateStr + 'T12:00:00'); // Local noon to avoid timezone issues
       
       const taskYear = taskDate.getFullYear();
       const taskMonth = taskDate.getMonth();
@@ -659,9 +665,9 @@ const TaskManager = () => {
                   onClick={() => handleTaskClick(task)}
                 >
                   <div className="truncate">{task.title}</div>
-                  {task.due_date && (
+                  {((task as any).dueDate || task.due_date) && (
                     <div className="text-xs opacity-70 text-muted-foreground">
-                      {formatTimeToBR(task.due_date)}
+                      {formatTimeToBR((task as any).dueDate || task.due_date)}
                     </div>
                   )}
                 </div>
