@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     const token = jwt.sign(
       {
         id: user.id,
-        userId: user.id,
+        userId: user.userId,
         email: user.email,
         role: user.role,
         organization_id: user.organizationId
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     // Prepare responses
     const userResponse = {
       id: user.id,
-      user_id: user.id,
+      user_id: user.userId,
       organization_id: user.organizationId,
       name: user.name,
       email: user.email,
