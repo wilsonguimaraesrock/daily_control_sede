@@ -82,6 +82,7 @@ export default async function handler(req, res) {
 
       console.log('📝 Task creation request body:', req.body);
       console.log('👥 Assigned user IDs received:', assignedUserIds);
+      console.log('🎯 Priority received:', priority);
 
       if (!title) {
         return res.status(400).json({ error: 'Title is required' });
@@ -94,11 +95,14 @@ export default async function handler(req, res) {
         'urgente': 'URGENTE'
       };
 
+      const mappedPriority = priorityMap[priority] || 'MEDIA';
+      console.log('🔄 Priority mapping:', priority, '->', mappedPriority);
+
       const newTask = await prisma.task.create({
         data: {
           title,
           description: description || '',
-          priority: priorityMap[priority] || 'MEDIA',
+          priority: mappedPriority,
           status: 'PENDENTE',
           dueDate: dueDate ? new Date(dueDate) : null,
           createdBy: user.id,
