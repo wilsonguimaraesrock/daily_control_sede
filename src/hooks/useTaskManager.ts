@@ -54,7 +54,7 @@ export const useTaskManager = () => {
       if (selectedPriority !== 'all') params.append('priority', selectedPriority);
       if (selectedUser !== 'all') params.append('assignedTo', selectedUser);
 
-      const response = await fetch(`${API_BASE_URL}/api/tasks/main?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks?${params}`, {
         headers: getAuthHeaders()
       });
 
@@ -96,7 +96,7 @@ export const useTaskManager = () => {
   const addTask = async (taskData: Partial<Task>) => {
     try {
       console.log('🔄 UseTaskManager - Sending task data:', taskData);
-      const response = await fetch(`${API_BASE_URL}/api/tasks/main`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(taskData)
