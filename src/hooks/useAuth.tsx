@@ -246,9 +246,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) throw new Error('Not authenticated');
 
     // Add current organization if not specified and user is not super admin
-    if (!userData.organization_id && currentUser && !checkSuperAdmin(currentUser)) {
-      userData.organization_id = currentUser.organization_id;
+    if (!userData.organizationId && currentUser && !checkSuperAdmin(currentUser)) {
+      userData.organizationId = currentUser.organization_id;
     }
+
+    console.log('🔄 Creating user with data:', userData);
 
     const response = await fetch(`${API_BASE_URL}/api/users`, {
       method: 'POST',
@@ -259,19 +261,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify(userData)
     });
 
+    console.log('📡 User creation response status:', response.status);
+
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'User creation failed');
+      console.error('❌ User creation failed:', error);
+      throw new Error(error.error || error.message || 'User creation failed');
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('✅ User creation success:', result);
+    return result;
   };
 
   const createUserInOrganization = async (userData: Partial<User>, organizationId?: string): Promise<User> => {
     const orgId = organizationId || currentUser?.organization_id;
     if (!orgId) throw new Error('Organization ID required');
 
-    return createUser({ ...userData, organization_id: orgId });
+    return createUser({ ...userData, organizationId: orgId });
   };
 
   const updateUser = async (userId: string, userData: any) => {

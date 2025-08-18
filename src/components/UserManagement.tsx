@@ -158,8 +158,32 @@ const UserManagement: React.FC = () => {
         role: newUser.role
       };
 
-      const success = await createUser(userData);
-      if (success) {
+      const result = await createUser(userData);
+      console.log('✅ User creation result:', result);
+      
+      // Check if result has expected structure
+      if (result && result.user && result.temporaryPassword) {
+        // Show success message with temporary password
+        toast({
+          title: "Usuário criado com sucesso!",
+          description: `${result.user.name} foi criado. Senha temporária: ${result.temporaryPassword}`,
+        });
+        
+        setNewUser({
+          name: '',
+          email: '',
+          role: 'vendedor',
+        });
+        setIsAddDialogOpen(false);
+        await loadUsers();
+      } else {
+        // Handle unexpected response structure
+        console.warn('⚠️ Unexpected response structure:', result);
+        toast({
+          title: "Usuário criado",
+          description: "Usuário criado, mas estrutura de resposta inesperada. Verifique a lista.",
+        });
+        
         setNewUser({
           name: '',
           email: '',
@@ -170,9 +194,13 @@ const UserManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Erro ao criar usuário no componente:', error);
+      
+      // Extract error message from API response
+      const errorMessage = error instanceof Error ? error.message : 'Erro inesperado ao criar usuário';
+      
       toast({
-        title: "Erro",
-        description: "Erro inesperado ao criar usuário",
+        title: "Erro ao criar usuário",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
