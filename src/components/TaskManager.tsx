@@ -338,6 +338,8 @@ const TaskManager = () => {
       };
 
       console.log('🔍 Sending task data:', taskData);
+      console.log('🔍 newTask.assigned_users:', newTask.assigned_users);
+      console.log('🔍 selectedUsers from form:', newTask.assigned_users);
       
       const success = await addTask(taskData);
       if (success) {

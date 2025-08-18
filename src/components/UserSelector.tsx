@@ -19,6 +19,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
   onUsersChange,
   placeholder = "Digite para buscar usuários..."
 }) => {
+  console.log('🔍 UserSelector - Received selectedUsers:', selectedUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -80,7 +81,10 @@ const UserSelector: React.FC<UserSelectorProps> = ({
 
   const handleSelectUser = (userId: string) => {
     if (!selectedUsers.includes(userId)) {
-      onUsersChange([...selectedUsers, userId]);
+      const newSelectedUsers = [...selectedUsers, userId];
+      console.log('🔍 UserSelector - Adding user:', userId);
+      console.log('🔍 UserSelector - New selected users:', newSelectedUsers);
+      onUsersChange(newSelectedUsers);
     }
     setSearchTerm('');
     setIsOpen(false);
