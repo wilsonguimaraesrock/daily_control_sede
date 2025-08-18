@@ -90,6 +90,16 @@ export default async function handler(req, res) {
 
       console.log('🔄 TASK-OPERATIONS Priority mapping:', priority, '->', finalPriority);
 
+      // 🔧 FIX: Use user.userId instead of user.id for createdBy field
+      // This field must reference the userId field in UserProfile table
+      const createdByUserId = user.userId || user.user_id;
+      console.log('👤 TASK-OPERATIONS Creator mapping:', {
+        userId: user.userId,
+        user_id: user.user_id,
+        id: user.id,
+        using: createdByUserId
+      });
+
       const newTask = await prisma.task.create({
         data: {
           title,
@@ -97,7 +107,7 @@ export default async function handler(req, res) {
           priority: finalPriority,
           status: 'PENDENTE',
           dueDate: dueDate ? new Date(dueDate) : null,
-          createdBy: user.id,
+          createdBy: createdByUserId, // 🔧 FIX: Use userId instead of id
           organizationId: user.organization_id,
           isPrivate: isPrivate || false
         },
