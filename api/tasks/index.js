@@ -87,12 +87,19 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Title is required' });
       }
 
+      // Map priority to uppercase enum values
+      const priorityMap = {
+        'baixa': 'BAIXA',
+        'media': 'MEDIA', 
+        'urgente': 'URGENTE'
+      };
+
       const newTask = await prisma.task.create({
         data: {
           title,
           description: description || '',
-          priority: priority || 'media',
-          status: 'pendente',
+          priority: priorityMap[priority] || 'MEDIA',
+          status: 'PENDENTE',
           dueDate: dueDate ? new Date(dueDate) : null,
           createdBy: user.id,
           organizationId: user.organization_id,
