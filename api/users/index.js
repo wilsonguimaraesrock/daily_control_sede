@@ -77,6 +77,18 @@ export default async function handler(req, res) {
 
       const userId = `user-${Date.now()}-${Math.random().toString(36).substring(2)}`;
       
+      console.log('📝 Creating user with data:', {
+        id: userId,
+        userId: userId,
+        email,
+        name,
+        role,
+        organizationId: targetOrgId,
+        passwordHash: '[HIDDEN]',
+        firstLoginCompleted: false,
+        isActive: true
+      });
+
       const newUser = await prisma.userProfile.create({
         data: {
           id: userId,
@@ -86,7 +98,8 @@ export default async function handler(req, res) {
           role,
           organizationId: targetOrgId,
           passwordHash: hashedPassword,
-          firstLoginCompleted: false
+          firstLoginCompleted: false,
+          isActive: true // Explicitly set isActive
         },
         include: {
           organization: true
@@ -119,9 +132,17 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('💥 Users API error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+      stack: error.stack
+    });
+    
     res.status(500).json({ 
       error: 'Internal server error',
-      message: error.message
+      message: error.message,
+      details: error.code ? `Database error: ${error.code}` : 'Unknown error'
     });
   } finally {
     await prisma.$disconnect();
