@@ -506,26 +506,21 @@ export const SchoolManagement: React.FC = () => {
         </div>
         
         <div className="flex gap-3">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setFormData(prev => ({ ...prev, type: 'SCHOOL' })); }}>
-                <School className="h-4 w-4 mr-2" />
-                Nova Escola
-              </Button>
-            </DialogTrigger>
-          </Dialog>
+          <Button onClick={() => { resetForm(); setFormData(prev => ({ ...prev, type: 'SCHOOL' })); setIsCreateDialogOpen(true); }}>
+            <School className="h-4 w-4 mr-2" />
+            Nova Escola
+          </Button>
           
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" onClick={() => { resetForm(); setFormData(prev => ({ ...prev, type: 'DEPARTMENT' })); }}>
-                <Building2 className="h-4 w-4 mr-2" />
-                Novo Departamento
-              </Button>
-            </DialogTrigger>
-          </Dialog>
+          <Button variant="outline" onClick={() => { resetForm(); setFormData(prev => ({ ...prev, type: 'DEPARTMENT' })); setIsCreateDialogOpen(true); }}>
+            <Building2 className="h-4 w-4 mr-2" />
+            Novo Departamento
+          </Button>
         </div>
-        
-          <DialogContent className="sm:max-w-2xl">
+      </div>
+
+      {/* Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 {formData.type === 'DEPARTMENT' ? (
