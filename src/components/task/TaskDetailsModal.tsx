@@ -249,20 +249,20 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
             <div className="space-y-3">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-slate-400">
                 <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span>Criado em: {formatDateToBR(task.created_at)}</span>
+                <span>Criado em: {formatDateToBR((task as any).createdAt || task.created_at)}</span>
               </div>
               
-              {task.due_date && (
+              {((task as any).dueDate || task.due_date) && (
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-slate-400">
                   <Clock className="w-4 h-4 flex-shrink-0" />
-                  <span>Vence em: {formatDateTimeToBR(task.due_date)}</span>
+                  <span>Vence em: {formatDateTimeToBR((task as any).dueDate || task.due_date)}</span>
                 </div>
               )}
               
-              {task.completed_at && (
+              {((task as any).completedAt || task.completed_at) && (
                 <div className="flex items-center space-x-2 text-sm text-muted-foreground dark:text-slate-400">
                   <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>Concluído em: {formatDateToBR(task.completed_at)}</span>
+                  <span>Concluído em: {formatDateToBR((task as any).completedAt || task.completed_at)}</span>
                 </div>
               )}
             </div>

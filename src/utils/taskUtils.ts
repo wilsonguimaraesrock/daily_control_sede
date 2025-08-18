@@ -1,11 +1,13 @@
 
 // Função utilitária para determinar se uma tarefa está atrasada
-export const isTaskOverdue = (task: { due_date?: string; status: string }) => {
-  if (!task.due_date) return false;
+export const isTaskOverdue = (task: { due_date?: string; dueDate?: string; status: string }) => {
+  // 🔧 FIX: Support both API formats (dueDate/due_date)
+  const taskDueDate = (task as any).dueDate || task.due_date;
+  if (!taskDueDate) return false;
   if (task.status === 'concluida' || task.status === 'cancelada') return false;
   
   const now = new Date();
-  const taskDate = new Date(task.due_date);
+  const taskDate = new Date(taskDueDate);
   return taskDate < now;
 };
 
