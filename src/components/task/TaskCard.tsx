@@ -66,9 +66,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
               )}
             </div>
             
-            {task.due_date && (
+            {((task as any).dueDate || task.due_date) && (
               <div className="text-muted-foreground text-xs font-medium dark:text-slate-300">
-                {getTimeFromDate(task.due_date)}
+                {getTimeFromDate((task as any).dueDate || task.due_date)}
               </div>
             )}
           </div>

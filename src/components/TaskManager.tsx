@@ -504,9 +504,11 @@ const TaskManager = () => {
 
   const getTasksForHour = (hour: number) => {
     return filteredTasks.filter(task => {
-      if (!task.due_date) return false;
+      // 🔧 FIX: Support both API formats (dueDate/due_date)
+      const taskDueDate = (task as any).dueDate || task.due_date;
+      if (!taskDueDate) return false;
       
-      const taskDate = new Date(task.due_date);
+      const taskDate = new Date(taskDueDate);
       const taskHour = taskDate.getHours();
       
       const selectedYear = selectedDate.getFullYear();
@@ -526,9 +528,11 @@ const TaskManager = () => {
 
   const getTasksForDay = (day: Date) => {
     return filteredTasks.filter(task => {
-      if (!task.due_date) return false;
+      // 🔧 FIX: Support both API formats (dueDate/due_date)
+      const taskDueDate = (task as any).dueDate || task.due_date;
+      if (!taskDueDate) return false;
       
-      const taskDate = new Date(task.due_date);
+      const taskDate = new Date(taskDueDate);
       
       const taskYear = taskDate.getFullYear();
       const taskMonth = taskDate.getMonth();

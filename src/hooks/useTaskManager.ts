@@ -208,11 +208,13 @@ export const useTaskManager = () => {
 
   const getOverdueTasks = () => {
     const today = new Date();
-    return tasks.filter(task => 
-      task.dueDate && 
-      new Date(task.dueDate) < today && 
-      task.status !== 'concluida'
-    );
+    return tasks.filter(task => {
+      // 🔧 FIX: Support both API formats (dueDate/due_date)
+      const taskDueDate = (task as any).dueDate || task.due_date;
+      return taskDueDate && 
+        new Date(taskDueDate) < today && 
+        task.status !== 'concluida';
+    });
   };
 
   const getTasksForUser = (userId: string) => {
