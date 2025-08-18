@@ -144,7 +144,8 @@ const TaskManager = () => {
 
   const canEditTask = (task: Task): boolean => {
     if (!currentUser) return false;
-    if (currentUser.role === 'admin') return true;
+    // 🔧 FIX: Include super_admin in edit permissions
+    if (currentUser.role === 'admin' || currentUser.role === 'super_admin') return true;
     return task.createdBy === currentUser.userId;
   };
 

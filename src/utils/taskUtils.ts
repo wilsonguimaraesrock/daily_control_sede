@@ -27,7 +27,10 @@ export const getStatusColor = (status: string, task?: { due_date?: string; statu
 };
 
 export const getPriorityColor = (priority: string) => {
-  switch (priority) {
+  // 🔧 FIX: Normalize priority to lowercase for comparison
+  const normalizedPriority = priority?.toLowerCase();
+  
+  switch (normalizedPriority) {
     case 'baixa': return 'dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30 bg-blue-500 text-white border-blue-600';
     case 'media': return 'dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-500/30 bg-orange-500 text-white border-orange-600';
     case 'urgente': return 'dark:bg-red-600/20 dark:text-red-500 dark:border-red-600/30 bg-red-600 text-white border-red-700';
@@ -51,7 +54,10 @@ export const getStatusLabel = (status: string, task?: { due_date?: string; statu
 };
 
 export const getPriorityLabel = (priority: string) => {
-  switch (priority) {
+  // 🔧 FIX: Normalize priority to lowercase for comparison
+  const normalizedPriority = priority?.toLowerCase();
+  
+  switch (normalizedPriority) {
     case 'baixa': return 'Baixa';
     case 'media': return 'Média';
     case 'urgente': return 'Urgente';
