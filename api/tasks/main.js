@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 
+const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
 
 function authenticateToken(req) {
@@ -20,34 +21,23 @@ function authenticateToken(req) {
 }
 
 export default async function handler(req, res) {
-  // CACHE BUSTER - v2024.01.29.001
-  console.log('🚀 TASKS API CALLED - Method:', req.method);
+  console.log('🚀 NEW MAIN TASKS API - Method:', req.method);
+  console.log('🚀 NEW MAIN TASKS API - Body:', req.body);
 
   const authResult = authenticateToken(req);
   if (authResult.error) {
     return res.status(authResult.status).json({ error: authResult.error });
   }
 
-  const user = authResult.user;
-  const prisma = new PrismaClient();
+  const { user } = authResult;
 
   try {
     if (req.method === 'GET') {
       // Get tasks
-      let whereClause = {};
-
-      // Multi-tenant: filter by organization
-      if (user.role === 'super_admin' || user.role === 'franchise_admin') {
-        const { organization_id } = req.query;
-        if (organization_id && organization_id !== 'all') {
-          whereClause.organizationId = organization_id;
-        }
-      } else {
-        whereClause.organizationId = user.organization_id;
-      }
-
       const tasks = await prisma.task.findMany({
-        where: whereClause,
+        where: {
+          organizationId: user.organization_id
+        },
         include: {
           organization: true,
           creator: {
@@ -74,49 +64,36 @@ export default async function handler(req, res) {
         orderBy: { createdAt: 'desc' }
       });
 
-      console.log(`📋 Retrieved ${tasks.length} tasks for ${user.email}`);
+      console.log(`📋 NEW Retrieved ${tasks.length} tasks for ${user.email}`);
       return res.json(tasks);
 
     } else if (req.method === 'POST') {
       // Create task
       const { title, description, priority, dueDate, assignedUserIds, isPrivate } = req.body;
 
-      console.log('📝 Task creation request body:', req.body);
-      console.log('👥 Assigned user IDs received:', assignedUserIds);
-      console.log('🎯 Priority received:', priority);
+      console.log('📝 NEW Task creation body:', req.body);
+      console.log('👥 NEW Assigned user IDs:', assignedUserIds);
 
       if (!title) {
         return res.status(400).json({ error: 'Title is required' });
       }
 
-      // Map priority to uppercase enum values
-      const priorityMap = {
-        'baixa': 'BAIXA',
-        'media': 'MEDIA', 
-        'urgente': 'URGENTE',
-        'BAIXA': 'BAIXA',
-        'MEDIA': 'MEDIA',
-        'URGENTE': 'URGENTE'
-      };
+      // DIRECT ENUM MAPPING - NO CACHE ISSUES
+      let finalPriority = 'MEDIA';
+      if (priority) {
+        if (priority.toLowerCase() === 'baixa' || priority === 'BAIXA') finalPriority = 'BAIXA';
+        if (priority.toLowerCase() === 'media' || priority === 'MEDIA') finalPriority = 'MEDIA';
+        if (priority.toLowerCase() === 'urgente' || priority === 'URGENTE') finalPriority = 'URGENTE';
+      }
 
-      const statusMap = {
-        'pendente': 'PENDENTE',
-        'em_andamento': 'EM_ANDAMENTO',
-        'concluida': 'CONCLUIDA',
-        'cancelada': 'CANCELADA'
-      };
-
-      const mappedPriority = priorityMap[priority] || 'MEDIA';
-      const mappedStatus = statusMap['pendente'] || 'PENDENTE';
-      console.log('🔄 Priority mapping:', priority, '->', mappedPriority);
-      console.log('🔄 Status mapping: pendente ->', mappedStatus);
+      console.log('🔄 NEW Priority mapping:', priority, '->', finalPriority);
 
       const newTask = await prisma.task.create({
         data: {
           title,
           description: description || '',
-          priority: mappedPriority,
-          status: mappedStatus,
+          priority: finalPriority,
+          status: 'PENDENTE',
           dueDate: dueDate ? new Date(dueDate) : null,
           createdBy: user.id,
           organizationId: user.organization_id,
@@ -149,15 +126,49 @@ export default async function handler(req, res) {
 
       // Create assignments if provided
       if (assignedUserIds && assignedUserIds.length > 0) {
+        console.log('💼 NEW Creating assignments for users:', assignedUserIds);
+        
         await prisma.taskAssignment.createMany({
           data: assignedUserIds.map(userId => ({
             taskId: newTask.id,
             userId: userId
           }))
         });
+
+        // Refetch task with assignments
+        const taskWithAssignments = await prisma.task.findUnique({
+          where: { id: newTask.id },
+          include: {
+            organization: true,
+            creator: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true
+              }
+            },
+            assignments: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true
+                  }
+                }
+              }
+            }
+          }
+        });
+
+        console.log('✅ NEW Task created with assignments');
+        console.log('👥 NEW Final assignments count:', taskWithAssignments.assignments.length);
+        return res.status(201).json(taskWithAssignments);
       }
 
-      console.log('✅ Task created:', newTask.title);
+      console.log('✅ NEW Task created without assignments');
       return res.status(201).json(newTask);
 
     } else {
@@ -165,7 +176,7 @@ export default async function handler(req, res) {
     }
 
   } catch (error) {
-    console.error('💥 Tasks API error:', error);
+    console.error('💥 NEW MAIN Tasks API error:', error);
     res.status(500).json({ 
       error: 'Internal server error',
       message: error.message
