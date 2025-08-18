@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, CheckCircle, User, Edit, History } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, User, Edit, History, Users, UserPlus } from 'lucide-react';
 import { Task } from '@/types/task';
 
 interface TaskCardProps {
@@ -89,13 +89,24 @@ const TaskCard: React.FC<TaskCardProps> = ({
           </Badge>
         </div>
 
-        {/* Informações de atribuição */}
-        {task.assigned_users && task.assigned_users.length > 0 && (
-          <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
-            <User className="w-3 h-3" />
-            <span className="text-xs">Atribuído: {task.assigned_users.map(userId => getUserName(userId)).join(', ')}</span>
-          </div>
-        )}
+        {/* Informações do criador e atribuição */}
+        <div className="space-y-1">
+          {/* Criador da tarefa */}
+          {task.created_by && (
+            <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
+              <UserPlus className="w-3 h-3" />
+              <span className="text-xs">Criado por: <span className="text-blue-600 font-medium dark:text-blue-400">{getUserName(task.created_by)}</span></span>
+            </div>
+          )}
+          
+          {/* Usuários atribuídos */}
+          {task.assigned_users && task.assigned_users.length > 0 && (
+            <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
+              <Users className="w-3 h-3" />
+              <span className="text-xs">Atribuído: {task.assigned_users.map(userId => getUserName(userId)).join(', ')}</span>
+            </div>
+          )}
+        </div>
 
         {/* Histórico de edição */}
         {task.edited_by && task.edited_at && (
