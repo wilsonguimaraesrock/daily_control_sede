@@ -324,25 +324,15 @@ export const SchoolManagement: React.FC = () => {
       
       console.log('🔄 Creating school with real API...');
       
-      // Create organization using real API
-      const organization = await createOrganization({
+      // Create organization using real API (includes admin creation)
+      const result = await createOrganization({
         name: formData.name,
         code: formData.code,
+        adminName: formData.adminName,
+        adminEmail: formData.adminEmail,
         type: formData.type,
         settings: formData.settings
       });
-
-      // Create admin user using real API
-      const adminUser = await createUserInOrganization({
-        name: formData.adminName,
-        email: formData.adminEmail,
-        role: 'admin',
-        is_active: true,
-        first_login_completed: false
-      }, organization.id);
-
-      // Generate temporary password using real API
-      const passwordReset = await generateTemporaryPassword(adminUser.user_id);
 
       toast({
         title: `${formData.type === 'DEPARTMENT' ? 'Departamento' : 'Escola'} criado com sucesso!`,
@@ -351,9 +341,9 @@ export const SchoolManagement: React.FC = () => {
 
       // Show password in a separate dialog
       const newSchool: SchoolWithAdmin = {
-        ...organization,
-        admin: adminUser,
-        adminPassword: passwordReset.newPassword
+        ...result.organization,
+        admin: result.admin,
+        adminPassword: result.admin.temporaryPassword
       };
 
       setSchools(prev => [...prev, newSchool]);
@@ -361,7 +351,7 @@ export const SchoolManagement: React.FC = () => {
       setIsCreateDialogOpen(false);
       resetForm();
       
-      console.log(`✅ School created: ${formData.name} - Password: ${passwordReset.newPassword}`);
+      console.log(`✅ School created: ${formData.name} - Password: ${result.admin.temporaryPassword}`);
       
     } catch (error) {
       console.error('Error creating school:', error);

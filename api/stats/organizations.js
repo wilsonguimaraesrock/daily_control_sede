@@ -67,14 +67,14 @@ export default async function handler(req, res) {
         const activeTasks = await prisma.task.count({
           where: { 
             organizationId: org.id,
-            status: { in: ['PENDING', 'IN_PROGRESS'] }
+            status: { in: ['PENDENTE', 'EM_ANDAMENTO'] }
           }
         });
 
         const completedTasks = await prisma.task.count({
           where: { 
             organizationId: org.id,
-            status: 'COMPLETED' 
+            status: 'CONCLUIDA' 
           }
         });
 
