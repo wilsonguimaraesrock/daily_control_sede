@@ -40,7 +40,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const getTimeFromDate = (dateString: string | undefined) => {
     if (!dateString) return '';
     try {
-      const date = new Date(dateString);
+      // 🐛 FIX: Remove 'Z' from ISO strings to prevent UTC conversion
+      const cleanDateString = dateString.endsWith('Z') ? dateString.slice(0, -1) : dateString;
+      const date = new Date(cleanDateString);
       return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     } catch {
       return '';

@@ -3,7 +3,14 @@
 export const formatDateToBR = (date: Date | string): string => {
   if (!date) return 'Data não informada';
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      // 🐛 FIX: Remove 'Z' from ISO strings to prevent UTC conversion
+      const dateString = date.endsWith('Z') ? date.slice(0, -1) : date;
+      dateObj = new Date(dateString);
+    } else {
+      dateObj = date;
+    }
     if (isNaN(dateObj.getTime())) return 'Data inválida';
     return dateObj.toLocaleDateString('pt-BR', {
       day: '2-digit',
@@ -18,7 +25,14 @@ export const formatDateToBR = (date: Date | string): string => {
 export const formatDateTimeToBR = (date: Date | string): string => {
   if (!date) return 'Data não informada';
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      // 🐛 FIX: Remove 'Z' from ISO strings to prevent UTC conversion
+      const dateString = date.endsWith('Z') ? date.slice(0, -1) : date;
+      dateObj = new Date(dateString);
+    } else {
+      dateObj = date;
+    }
     if (isNaN(dateObj.getTime())) return 'Data inválida';
     return dateObj.toLocaleString('pt-BR', {
       day: '2-digit',
@@ -35,7 +49,14 @@ export const formatDateTimeToBR = (date: Date | string): string => {
 export const formatTimeToBR = (date: Date | string): string => {
   if (!date) return '--:--';
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    let dateObj: Date;
+    if (typeof date === 'string') {
+      // 🐛 FIX: Remove 'Z' from ISO strings to prevent UTC conversion
+      const dateString = date.endsWith('Z') ? date.slice(0, -1) : date;
+      dateObj = new Date(dateString);
+    } else {
+      dateObj = date;
+    }
     if (isNaN(dateObj.getTime())) return '--:--';
     return dateObj.toLocaleTimeString('pt-BR', {
       hour: '2-digit',
@@ -47,8 +68,8 @@ export const formatTimeToBR = (date: Date | string): string => {
 };
 
 export const isSameDay = (date1: Date | string, date2: Date | string): boolean => {
-  const d1 = typeof date1 === 'string' ? new Date(date1) : date1;
-  const d2 = typeof date2 === 'string' ? new Date(date2) : date2;
+  const d1 = typeof date1 === 'string' ? new Date(date1.endsWith('Z') ? date1.slice(0, -1) : date1) : date1;
+  const d2 = typeof date2 === 'string' ? new Date(date2.endsWith('Z') ? date2.slice(0, -1) : date2) : date2;
   
   return d1.getFullYear() === d2.getFullYear() &&
          d1.getMonth() === d2.getMonth() &&
