@@ -35,16 +35,16 @@ const NotificationTestPanel: React.FC = () => {
   };
 
   return (
-    <Card className="bg-slate-800/50 backdrop-blur-sm border-slate-700">
+    <Card className="bg-card backdrop-blur-sm border border-border">
       <CardHeader>
-        <CardTitle className="text-white flex items-center">
+        <CardTitle className="text-foreground flex items-center">
           <Bell className="w-5 h-5 mr-2" />
           Teste de Notificações
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-sm text-slate-400">
-          <p className="mb-2">Status das notificações:</p>
+        <div className="text-sm text-muted-foreground">
+          <p className="mb-2 text-foreground">Status das notificações:</p>
           <ul className="space-y-1">
             <li>• Suporte: {isSupported ? '✅ Disponível' : '❌ Não disponível'}</li>
             <li>• Permissão: {permission === 'granted' ? '✅ Permitida' : permission === 'denied' ? '❌ Negada' : '⏳ Não solicitada'}</li>
@@ -54,7 +54,7 @@ const NotificationTestPanel: React.FC = () => {
         {permission !== 'granted' && isSupported && (
           <Button
             onClick={requestPermission}
-            className="w-full bg-orange-600 hover:bg-orange-700"
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white"
           >
             <Bell className="w-4 h-4 mr-2" />
             Solicitar Permissão para Notificações
@@ -62,7 +62,7 @@ const NotificationTestPanel: React.FC = () => {
         )}
 
         <div className="grid gap-2">
-          <p className="text-sm font-medium text-white mb-2">Testar notificações:</p>
+          <p className="text-sm font-medium text-foreground mb-2">Testar notificações:</p>
           
           {testNotifications.map((notification, index) => (
             <Button
@@ -70,7 +70,7 @@ const NotificationTestPanel: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={() => handleTestNotification(notification)}
-              className="justify-start bg-slate-700/50 border-slate-600 hover:bg-slate-600/50 text-white"
+              className="justify-start bg-secondary hover:bg-secondary/80 border-border text-foreground"
             >
               {notification.type === 'task_assigned' && <Target className="w-4 h-4 mr-2 text-blue-500" />}
               {notification.type === 'task_overdue' && <AlertTriangle className="w-4 h-4 mr-2 text-red-500" />}
@@ -80,7 +80,7 @@ const NotificationTestPanel: React.FC = () => {
           ))}
         </div>
 
-        <div className="text-xs text-slate-500 mt-4">
+        <div className="text-xs text-muted-foreground mt-4 p-3 bg-muted/30 rounded-lg border border-border">
           <p>💡 <strong>Dica:</strong> As notificações aparecerão tanto como push notifications nativas quanto no centro de notificações ao lado do sino no header.</p>
         </div>
       </CardContent>
