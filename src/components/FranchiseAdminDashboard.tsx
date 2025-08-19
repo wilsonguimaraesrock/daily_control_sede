@@ -120,35 +120,53 @@ export const FranchiseAdminDashboard: React.FC = () => {
       setRecentUsers(recentUsersList);
       
       // Load real statistics from API
+      console.log('🔄 Fetching stats from API...');
       const statsResponse = await fetch(`${API_BASE_URL}/api/stats/organizations`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       });
 
+      console.log('📊 Stats response status:', statsResponse.status);
+
       if (!statsResponse.ok) {
-        throw new Error('Failed to load statistics');
+        const errorText = await statsResponse.text();
+        console.error('❌ Stats API error:', errorText);
+        throw new Error(`Failed to load statistics: ${statsResponse.status}`);
       }
 
       const statsData = await statsResponse.json();
+      console.log('📊 Stats data received:', statsData);
+      
+      // Validate data structure
+      if (!statsData.global) {
+        console.error('❌ Missing global stats in response:', statsData);
+        throw new Error('Invalid stats data structure');
+      }
       
       const realStats: FranchiseStats = {
-        totalSchools: statsData.global.totalSchools,
-        totalUsers: statsData.global.totalUsers,
-        activeTasks: statsData.global.activeTasks,
-        completedTasks: statsData.global.completedTasks,
-        overdueTasks: statsData.global.overdueTasks,
-        completionRate: statsData.global.completionRate,
-        schoolsWithIssues: statsData.global.schoolsWithIssues
+        totalSchools: statsData.global.totalSchools || 0,
+        totalUsers: statsData.global.totalUsers || 0,
+        activeTasks: statsData.global.activeTasks || 0,
+        completedTasks: statsData.global.completedTasks || 0,
+        overdueTasks: statsData.global.overdueTasks || 0,
+        completionRate: statsData.global.completionRate || 0,
+        schoolsWithIssues: statsData.global.schoolsWithIssues || 0
       };
       
+      console.log('📊 Final stats to display:', realStats);
       setStats(realStats);
       
       console.log('✅ Real data loaded successfully');
       console.log(`📊 Organizations: ${orgs.length}, Users: ${totalUsers}`);
       
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('❌ Error loading dashboard data:', error);
+      console.error('❌ Error details:', error.message);
+      
+      // Fallback to prevent showing 0% when there's an error
+      console.log('🔄 Using fallback stats due to error');
+      
       toast({
         title: "Erro",
         description: "Erro ao carregar dados do dashboard",

@@ -100,18 +100,26 @@ export default async function handler(req, res) {
     );
 
     // Calculate global statistics
+    const totalSchools = organizations.filter(org => org.type === 'SCHOOL').length;
+    const totalDepartments = organizations.filter(org => org.type === 'DEPARTMENT').length;
+    
     const globalStats = {
       totalOrganizations: organizations.length,
+      totalSchools: totalSchools,
+      totalDepartments: totalDepartments,
       totalUsers: orgStats.reduce((sum, org) => sum + org.userCount, 0),
       totalTasks: orgStats.reduce((sum, org) => sum + org.taskStats.total, 0),
       activeTasks: orgStats.reduce((sum, org) => sum + org.taskStats.active, 0),
       completedTasks: orgStats.reduce((sum, org) => sum + org.taskStats.completed, 0),
-      overdueTasks: orgStats.reduce((sum, org) => sum + org.taskStats.overdue, 0)
+      overdueTasks: orgStats.reduce((sum, org) => sum + org.taskStats.overdue, 0),
+      schoolsWithIssues: 0 // TODO: Calculate based on real criteria
     };
 
     globalStats.completionRate = globalStats.totalTasks > 0
       ? Math.round((globalStats.completedTasks / globalStats.totalTasks) * 100)
       : 0;
+
+    console.log('📊 Global stats calculated:', globalStats);
 
     const response = {
       global: globalStats,
