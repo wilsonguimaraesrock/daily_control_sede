@@ -71,7 +71,19 @@ export default async function handler(req, res) {
           description: description || '',
           priority: mappedPriority,
           status: mappedStatus,
-          dueDate: dueDate ? new Date(dueDate) : null,
+          dueDate: dueDate ? (() => {
+            console.log('🕒 DEBUG TASKS/CREATE - Original dueDate:', dueDate);
+            // 🐛 FIX: Timezone issue - preserve local datetime without UTC conversion
+            if (typeof dueDate === 'string' && dueDate.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+              const processedDate = new Date(dueDate.replace(' ', 'T'));
+              console.log('🕒 DEBUG TASKS/CREATE - Processed as local:', processedDate.toISOString());
+              return processedDate;
+            } else {
+              const processedDate = new Date(dueDate);
+              console.log('🕒 DEBUG TASKS/CREATE - Processed as default:', processedDate.toISOString());
+              return processedDate;
+            }
+          })() : null,
           createdBy: user.id,
           organizationId: user.organization_id,
           isPrivate: isPrivate || false

@@ -130,7 +130,19 @@ export default async function handler(req, res) {
         }
       }
       if (req.body.dueDate !== undefined) {
-        updateData.dueDate = req.body.dueDate ? new Date(req.body.dueDate) : null;
+        if (req.body.dueDate) {
+          console.log('🕒 DEBUG UPDATE - Original dueDate:', req.body.dueDate);
+          // 🐛 FIX: Timezone issue - preserve local datetime without UTC conversion
+          if (typeof req.body.dueDate === 'string' && req.body.dueDate.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+            updateData.dueDate = new Date(req.body.dueDate.replace(' ', 'T'));
+            console.log('🕒 DEBUG UPDATE - Processed as local:', updateData.dueDate.toISOString());
+          } else {
+            updateData.dueDate = new Date(req.body.dueDate);
+            console.log('🕒 DEBUG UPDATE - Processed as default:', updateData.dueDate.toISOString());
+          }
+        } else {
+          updateData.dueDate = null;
+        }
       }
       if (req.body.isPrivate !== undefined) updateData.isPrivate = req.body.isPrivate;
 
