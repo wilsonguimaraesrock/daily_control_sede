@@ -348,11 +348,19 @@ const TaskManager = () => {
     setIsCreatingTask(true);
     try {
       // Convert frontend format to API format
+      // 🔧 ENSURE TIME IS NOT LOST: If due_date exists but no time, add default time
+      let finalDueDate = newTask.due_date;
+      if (finalDueDate && !finalDueDate.includes(':')) {
+        // If only date is provided, add default time
+        finalDueDate = `${finalDueDate} ${newTask.due_time || '09:00'}:00`;
+        console.log('🕒 DEBUG: Added missing time to due_date:', finalDueDate);
+      }
+      
       const taskData = {
         title: newTask.title,
         description: newTask.description,
         priority: newTask.priority,
-        dueDate: newTask.due_date || undefined,
+        dueDate: finalDueDate || undefined,
         assignedUserIds: newTask.assigned_users, // This should be an array of user IDs
         isPrivate: newTask.is_private
       };

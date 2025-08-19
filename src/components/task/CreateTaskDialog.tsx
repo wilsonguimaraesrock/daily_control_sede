@@ -178,7 +178,10 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                     // 🐛 FIX: Timezone bug - ensure local datetime format is preserved
                     const localDateTime = `${dateValue} ${timeValue}:00`;
                     console.log('🕒 DEBUG CreateTask - Date set to:', localDateTime);
-                    onTaskChange({ ...newTask, due_date: localDateTime });
+                    console.log('🕒 DEBUG CreateTask - timeValue used:', timeValue);
+                    console.log('🕒 DEBUG CreateTask - newTask.due_time:', newTask.due_time);
+                    // 🔧 ENSURE due_time is always set
+                    onTaskChange({ ...newTask, due_date: localDateTime, due_time: timeValue });
                   } else {
                     onTaskChange({ ...newTask, due_date: '' });
                   }
@@ -192,14 +195,16 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
               <Input
                 id="taskDueTime"
                 type="time"
-                value={newTask.due_time}
+                value={newTask.due_time || '09:00'}
                 onChange={(e) => {
-                  const timeValue = e.target.value;
+                  const timeValue = e.target.value || '09:00';
                   const dateValue = extractDatePart(newTask.due_date);
                   
                   // Combina data e hora mantendo formato local
                   // Formato: "YYYY-MM-DD HH:MM:SS" (será convertido para timezone no useTaskManager)
                   const localDateTime = `${dateValue} ${timeValue}:00`;
+                  console.log('🕒 DEBUG CreateTask - Time changed to:', timeValue);
+                  console.log('🕒 DEBUG CreateTask - Final localDateTime:', localDateTime);
                   onTaskChange({ ...newTask, due_time: timeValue, due_date: localDateTime });
                 }}
                 className="bg-muted border-border text-foreground dark:bg-slate-700/50 dark:border-slate-600 dark:text-white"
