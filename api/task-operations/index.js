@@ -100,13 +100,27 @@ export default async function handler(req, res) {
         using: createdByUserId
       });
 
+      // 🐛 FIX: Timezone issue - preserve local datetime without UTC conversion
+      let processedDueDate = null;
+      if (dueDate) {
+        console.log('🕒 DEBUG - Original dueDate:', dueDate);
+        // If dueDate comes as "YYYY-MM-DD HH:MM:SS", treat as local time
+        if (typeof dueDate === 'string' && dueDate.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+          processedDueDate = new Date(dueDate.replace(' ', 'T'));
+          console.log('🕒 DEBUG - Processed as local:', processedDueDate.toISOString());
+        } else {
+          processedDueDate = new Date(dueDate);
+          console.log('🕒 DEBUG - Processed as default:', processedDueDate.toISOString());
+        }
+      }
+
       const newTask = await prisma.task.create({
         data: {
           title,
           description: description || '',
           priority: finalPriority,
           status: 'PENDENTE',
-          dueDate: dueDate ? new Date(dueDate) : null,
+          dueDate: processedDueDate,
           createdBy: createdByUserId, // 🔧 FIX: Use userId instead of id
           organizationId: user.organization_id,
           isPrivate: isPrivate || false

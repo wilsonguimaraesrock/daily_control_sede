@@ -175,9 +175,9 @@ const CreateTaskDialog: React.FC<CreateTaskDialogProps> = ({
                   const timeValue = newTask.due_time || '09:00';
                   
                   if (dateValue) {
-                    // Combina data e hora mantendo formato local
-                    // Formato: "YYYY-MM-DD HH:MM:SS" (será convertido para timezone no useTaskManager)
+                    // 🐛 FIX: Timezone bug - ensure local datetime format is preserved
                     const localDateTime = `${dateValue} ${timeValue}:00`;
+                    console.log('🕒 DEBUG CreateTask - Date set to:', localDateTime);
                     onTaskChange({ ...newTask, due_date: localDateTime });
                   } else {
                     onTaskChange({ ...newTask, due_date: '' });
