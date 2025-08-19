@@ -96,6 +96,12 @@ export const useTaskManager = () => {
   const addTask = async (taskData: Partial<Task>) => {
     try {
       console.log('🔄 UseTaskManager - Sending task data:', taskData);
+      console.log('🔄 UseTaskManager - dueDate specifically:', taskData.dueDate);
+      console.log('🔄 UseTaskManager - dueDate type:', typeof taskData.dueDate);
+      if (taskData.dueDate) {
+        console.log('🔄 UseTaskManager - dueDate length:', taskData.dueDate.length);
+        console.log('🔄 UseTaskManager - dueDate includes ":":', taskData.dueDate.includes(':'));
+      }
       const response = await fetch(`${API_BASE_URL}/api/task-operations`, {
         method: 'POST',
         headers: getAuthHeaders(),
