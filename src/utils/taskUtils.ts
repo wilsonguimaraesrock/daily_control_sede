@@ -8,6 +8,20 @@ export const isTaskOverdue = (task: { due_date?: string; dueDate?: string; statu
   
   const now = new Date();
   const taskDate = new Date(taskDueDate);
+  
+  // 🐛 DEBUG: Log para verificar comparação de datas
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🕒 isTaskOverdue Debug:', {
+      taskDueDate,
+      taskDate: taskDate.toISOString(),
+      now: now.toISOString(),
+      nowLocal: now.toLocaleString('pt-BR'),
+      taskLocal: taskDate.toLocaleString('pt-BR'),
+      isOverdue: taskDate < now,
+      timeDiff: (now.getTime() - taskDate.getTime()) / (1000 * 60), // em minutos
+    });
+  }
+  
   return taskDate < now;
 };
 
