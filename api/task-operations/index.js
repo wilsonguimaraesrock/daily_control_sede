@@ -33,11 +33,48 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
+      // 🔄 EXTRACT QUERY FILTERS
+      const { status, priority, assignedTo } = req.query;
+      console.log('🔍 TASK-OPERATIONS Filters:', { status, priority, assignedTo });
+      
+      // 🔧 BUILD WHERE CLAUSE WITH FILTERS
+      const whereClause = {
+        organizationId: user.organization_id
+      };
+      
+      // 🎯 STATUS FILTER - Include 'em_andamento' when filtering by 'pendente'
+      if (status && status !== 'all') {
+        if (status === 'pendente') {
+          // When filtering by 'pendente', include both 'pendente' and 'em_andamento'
+          whereClause.status = { in: ['PENDENTE', 'EM_ANDAMENTO'] };
+          console.log('📋 TASK-OPERATIONS Including em_andamento in pendente filter');
+        } else {
+          // For other statuses, filter exactly
+          const statusMap = {
+            'em_andamento': 'EM_ANDAMENTO',
+            'concluida': 'CONCLUIDA',
+            'cancelada': 'CANCELADA'
+          };
+          whereClause.status = statusMap[status] || status.toUpperCase();
+        }
+      }
+      
+      // 🎯 PRIORITY FILTER
+      if (priority && priority !== 'all') {
+        const priorityMap = {
+          'baixa': 'BAIXA',
+          'media': 'MEDIA', 
+          'urgente': 'URGENTE',
+          'alta': 'URGENTE'
+        };
+        whereClause.priority = priorityMap[priority] || priority.toUpperCase();
+      }
+      
+      console.log('🔍 TASK-OPERATIONS Final where clause:', whereClause);
+      
       // Get tasks
       const tasks = await prisma.task.findMany({
-        where: {
-          organizationId: user.organization_id
-        },
+        where: whereClause,
         include: {
           organization: true,
           creator: {
