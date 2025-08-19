@@ -47,15 +47,35 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('📊 Starting stats query...');
+    console.log(`📊 Starting stats query for user ${user.email} (org: ${user.organization_id})`);
 
-    // Get all organizations
+    // 🎯 FIX: Filter organizations based on user permissions
+    let organizationFilter = {};
+    
+    // If user is from PD&I (franchise), can see all organizations
+    if (user.organization_id === 'pdi-tech-001') {
+      // PD&I users can see all organizations
+      organizationFilter = { isActive: true };
+      console.log('📊 PD&I franchise user: accessing all organizations');
+    } else {
+      // Other users can only see their own organization
+      organizationFilter = { 
+        id: user.organization_id,
+        isActive: true 
+      };
+      console.log(`📊 Regular user: accessing only org ${user.organization_id}`);
+    }
+
+    // Get organizations based on user permissions
     const organizations = await prisma.organization.findMany({
+      where: organizationFilter,
       include: {
         users: true,
         tasks: true
       }
     });
+    
+    console.log(`📊 Found ${organizations.length} organizations for user`);
 
     // Calculate stats for each organization
     const orgStats = await Promise.all(
