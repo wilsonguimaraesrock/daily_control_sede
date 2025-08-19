@@ -44,7 +44,7 @@ const UserHeader: React.FC = () => {
                       <School className="h-4 w-4" /> : 
                       <Building2 className="h-4 w-4" />
                     }
-                    <span className="text-sm opacity-80">
+                    <span className="text-sm opacity-80 text-primary-foreground dark:text-white">
                       {currentOrganization.name} ({currentOrganization.code})
                     </span>
                   </div>
