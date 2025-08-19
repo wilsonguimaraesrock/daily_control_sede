@@ -25,7 +25,7 @@ const UserHeader: React.FC = () => {
   ) || isSuperAdmin();
 
   return (
-    <Card className="mb-6 border bg-primary text-primary-foreground dark:bg-slate-800/50 dark:border-slate-700">
+    <Card className="mb-6 border bg-primary text-primary-foreground border-primary/20">
       <CardContent className="p-4">
         <div className="flex flex-col gap-4">
           {/* Main Header Row */}
