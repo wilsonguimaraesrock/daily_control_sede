@@ -13,13 +13,16 @@ import { OrganizationSelector } from '@/components/OrganizationSelector';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('tasks');
-  const { currentUser, logout, canAccessUserManagement, isSuperAdmin, canSwitchOrganization } = useAuth();
+  const { currentUser, currentOrganization, logout, canAccessUserManagement, isSuperAdmin, canSwitchOrganization } = useAuth();
   
   // Check if user can access franchise dashboard - only PD&I organization
   const canAccessFranchise = (
     currentUser?.organization_id === 'pdi-tech-001' && 
     (currentUser?.role === 'super_admin' || currentUser?.role === 'franchise_admin' || currentUser?.role === 'admin')
   ) || isSuperAdmin();
+
+  // Hide notifications tab for schools
+  const showNotifications = currentOrganization?.type !== 'SCHOOL';
 
   const handleLogout = async () => {
     await logout();
@@ -45,8 +48,8 @@ const Index = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className={`grid w-full ${
-            canAccessFranchise && canAccessUserManagement() ? 'grid-cols-4' :
-            canAccessFranchise || canAccessUserManagement() ? 'grid-cols-3' : 'grid-cols-2'
+            canAccessFranchise && canAccessUserManagement() && showNotifications ? 'grid-cols-4' :
+            (canAccessFranchise && showNotifications) || (canAccessUserManagement() && showNotifications) || (canAccessFranchise && canAccessUserManagement()) ? 'grid-cols-3' : 'grid-cols-2'
           } bg-card border border-border shadow-sm`}>
             <TabsTrigger 
               value="tasks" 
@@ -56,14 +59,16 @@ const Index = () => {
               <span className="hidden sm:inline">Tarefas</span>
               <span className="sm:hidden">Tarefas</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="notifications" 
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-            >
-              <Bell className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Notificações</span>
-              <span className="sm:hidden">Notific.</span>
-            </TabsTrigger>
+            {showNotifications && (
+              <TabsTrigger 
+                value="notifications" 
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                <Bell className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Notificações</span>
+                <span className="sm:hidden">Notific.</span>
+              </TabsTrigger>
+            )}
             {canAccessUserManagement() && (
               <TabsTrigger 
                 value="users" 
@@ -90,9 +95,11 @@ const Index = () => {
             <TaskManager />
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-6">
-            <NotificationTestPanel />
-          </TabsContent>
+          {showNotifications && (
+            <TabsContent value="notifications" className="space-y-6">
+              <NotificationTestPanel />
+            </TabsContent>
+          )}
 
           {canAccessUserManagement() && (
             <TabsContent value="users" className="space-y-6">
