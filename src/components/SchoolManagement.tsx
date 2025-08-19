@@ -99,7 +99,8 @@ export const SchoolManagement: React.FC = () => {
     getOrganizations,
     createUserInOrganization,
     generateTemporaryPassword,
-    deleteOrganization 
+    deleteOrganization,
+    getUsersInOrganization
   } = useAuth();
   
   const { toast } = useToast();
