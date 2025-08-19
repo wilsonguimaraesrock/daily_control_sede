@@ -881,20 +881,20 @@ app.get('/api/stats/tasks', authenticateToken, async (req, res) => {
       prisma.task.count({ 
         where: { 
           ...whereClause, 
-          status: { in: ['pendente', 'em_andamento'] } 
+          status: { in: ['PENDENTE', 'EM_ANDAMENTO'] } 
         } 
       }),
       prisma.task.count({ 
         where: { 
           ...whereClause, 
-          status: 'concluida' 
+          status: 'CONCLUIDA' 
         } 
       }),
       prisma.task.count({ 
         where: { 
           ...whereClause, 
           dueDate: { lt: new Date() },
-          status: { not: 'concluida' }
+          status: { not: 'CONCLUIDA' }
         } 
       })
     ]);
