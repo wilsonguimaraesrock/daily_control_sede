@@ -39,6 +39,7 @@ export const useTaskManager = () => {
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedAccessLevel, setSelectedAccessLevel] = useState<string>('all');
 
   const { currentUser } = useAuth();
   const { toast } = useToast();
@@ -53,6 +54,7 @@ export const useTaskManager = () => {
       if (selectedStatus !== 'all') params.append('status', selectedStatus);
       if (selectedPriority !== 'all') params.append('priority', selectedPriority);
       if (selectedUser !== 'all') params.append('assignedTo', selectedUser);
+      if (selectedAccessLevel !== 'all') params.append('accessLevel', selectedAccessLevel);
 
       const response = await fetch(`${API_BASE_URL}/api/task-operations?${params}`, {
         headers: getAuthHeaders()
@@ -74,7 +76,7 @@ export const useTaskManager = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser, selectedStatus, selectedPriority, selectedUser, toast]);
+  }, [currentUser, selectedStatus, selectedPriority, selectedUser, selectedAccessLevel, toast]);
 
   // 🔄 CARREGAR USUÁRIOS
   const loadUserProfiles = useCallback(async () => {
@@ -239,9 +241,11 @@ export const useTaskManager = () => {
     selectedUser,
     selectedPriority,
     selectedStatus,
+    selectedAccessLevel,
     setSelectedUser,
     setSelectedPriority,
     setSelectedStatus,
+    setSelectedAccessLevel,
     
     // Ações
     loadTasks,

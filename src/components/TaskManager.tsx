@@ -48,6 +48,8 @@ const TaskManager = () => {
     setSelectedPriority,
     selectedStatus,
     setSelectedStatus,
+    selectedAccessLevel,
+    setSelectedAccessLevel,
     addTask,
     updateTask,
     deleteTask,
@@ -67,7 +69,6 @@ const TaskManager = () => {
 
   // Estados adicionais necessários
   const [activeFilter, setActiveFilter] = useState<'all' | 'today' | 'week' | 'month' | 'overdue'>('all');
-  const [selectedAccessLevel, setSelectedAccessLevel] = useState<string>('all');
   const [updatingTask, setUpdatingTask] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
@@ -144,9 +145,21 @@ const TaskManager = () => {
 
   const canEditTask = (task: Task): boolean => {
     if (!currentUser) return false;
-    // 🔧 FIX: Include super_admin in edit permissions
+    
+    // Admins e super_admins podem editar qualquer tarefa
     if (currentUser.role === 'admin' || currentUser.role === 'super_admin') return true;
-    return task.createdBy === currentUser.userId;
+    
+    // Criador da tarefa pode editar
+    if (task.createdBy === currentUser.userId) return true;
+    
+    // 🔧 FIX: Usuários atribuídos à tarefa podem gerenciar suas tarefas
+    const isAssignedToTask = task.assignments?.some((assignment: any) => 
+      assignment.user?.userId === currentUser.userId || 
+      assignment.user?.id === currentUser.userId ||
+      assignment.userId === currentUser.userId
+    ) || task.assigned_users?.includes(currentUser.userId);
+    
+    return isAssignedToTask;
   };
 
   const canEditTaskFull = canEditTask;

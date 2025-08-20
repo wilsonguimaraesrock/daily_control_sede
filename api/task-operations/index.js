@@ -34,8 +34,8 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       // 🔄 EXTRACT QUERY FILTERS
-      const { status, priority, assignedTo } = req.query;
-      console.log('🔍 TASK-OPERATIONS Filters:', { status, priority, assignedTo });
+      const { status, priority, assignedTo, accessLevel } = req.query;
+      console.log('🔍 TASK-OPERATIONS Filters:', { status, priority, assignedTo, accessLevel });
       
       // 🔧 BUILD WHERE CLAUSE WITH FILTERS
       const whereClause = {
@@ -70,7 +70,17 @@ export default async function handler(req, res) {
         whereClause.priority = priorityMap[priority] || priority.toUpperCase();
       }
       
+      // 🔧 ADDITIONAL FILTERS WILL BE APPLIED AFTER INITIAL QUERY DUE TO COMPLEX RELATIONSHIPS
+      let additionalFilters = {};
+      if (assignedTo && assignedTo !== 'all') {
+        additionalFilters.assignedTo = assignedTo;
+      }
+      if (accessLevel && accessLevel !== 'all') {
+        additionalFilters.accessLevel = accessLevel;
+      }
+      
       console.log('🔍 TASK-OPERATIONS Final where clause:', whereClause);
+      console.log('🔍 TASK-OPERATIONS Additional filters:', additionalFilters);
       
       // Get tasks
       const tasks = await prisma.task.findMany({
@@ -101,8 +111,37 @@ export default async function handler(req, res) {
         orderBy: { createdAt: 'desc' }
       });
 
-      console.log(`📋 TASK-OPERATIONS Retrieved ${tasks.length} tasks for ${user.email}`);
-      return res.json(tasks);
+      // 🔧 APPLY ADDITIONAL FILTERS ON RETRIEVED TASKS
+      let filteredTasks = tasks;
+      
+      // Filter by assigned user
+      if (additionalFilters.assignedTo) {
+        filteredTasks = filteredTasks.filter(task => 
+          task.assignments?.some(assignment => 
+            assignment.user?.id === additionalFilters.assignedTo
+          )
+        );
+        console.log(`🎯 TASK-OPERATIONS Filtered by assignedTo: ${filteredTasks.length} tasks`);
+      }
+      
+      // Filter by access level (role)
+      if (additionalFilters.accessLevel) {
+        filteredTasks = filteredTasks.filter(task => {
+          // Check if creator has the access level
+          const creatorMatch = task.creator?.role === additionalFilters.accessLevel;
+          
+          // Check if any assigned user has the access level
+          const assignedMatch = task.assignments?.some(assignment => 
+            assignment.user?.role === additionalFilters.accessLevel
+          );
+          
+          return creatorMatch || assignedMatch;
+        });
+        console.log(`🎯 TASK-OPERATIONS Filtered by accessLevel: ${filteredTasks.length} tasks`);
+      }
+
+      console.log(`📋 TASK-OPERATIONS Retrieved ${filteredTasks.length} tasks for ${user.email}`);
+      return res.json(filteredTasks);
 
     } else if (req.method === 'POST') {
       // Create task
