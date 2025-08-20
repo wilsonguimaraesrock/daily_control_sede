@@ -36,6 +36,9 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
 }) => {
   const { currentUser } = useAuth();
 
+  // 🔍 TESTE BÁSICO - Este log deve aparecer SEMPRE
+  console.log('🚀 AdvancedTaskFilters RENDERIZOU!', new Date().toLocaleTimeString());
+
   // Todos os usuários autenticados podem usar os filtros avançados
   const canUseAdvancedFilters = currentUser && currentUser.role;
 

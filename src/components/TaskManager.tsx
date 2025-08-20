@@ -39,6 +39,9 @@ import { NewTask, Task, EditTask } from '@/types/task';
  */
 
 const TaskManager = () => {
+  // 🔍 TESTE BÁSICO - TaskManager renderizou
+  console.log('🚀 TaskManager RENDERIZOU!', new Date().toLocaleTimeString());
+
   const { 
     tasks, 
     isLoading, 

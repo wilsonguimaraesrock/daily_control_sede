@@ -30,6 +30,9 @@ const getAuthHeaders = () => {
 };
 
 export const useTaskManager = () => {
+  // 🔍 TESTE BÁSICO - Hook inicializou
+  console.log('🚀 useTaskManager INICIALIZADO!', new Date().toLocaleTimeString());
+
   // 🎯 ESTADOS PRINCIPAIS
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);

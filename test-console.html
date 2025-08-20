@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Console</title>
+</head>
+<body>
+    <h1>Teste de Console</h1>
+    <p>Abra o console (F12) para ver os logs</p>
+    
+    <script>
+        console.log('🔍 TESTE: Console funcionando!', new Date().toLocaleTimeString());
+        console.log('🚀 TESTE: Se você vê esta mensagem, o console funciona!');
+        console.warn('⚠️ TESTE: Warning test');
+        console.error('❌ TESTE: Error test');
+        
+        // Teste a cada 2 segundos
+        setInterval(() => {
+            console.log('⏰ TESTE CONTÍNUO:', new Date().toLocaleTimeString());
+        }, 2000);
+        
+        // Adiciona um botão para forçar log
+        document.body.innerHTML += '<br><button onclick="console.log(\'🔍 BOTÃO: Log forçado!\', new Date())">Forçar Log</button>';
+    </script>
+</body>
+</html>
