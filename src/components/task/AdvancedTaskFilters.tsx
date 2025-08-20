@@ -43,15 +43,16 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
   const canUseAdvancedFilters = currentUser && currentUser.role;
 
   // 🔍 DEBUG: Log filter states for debugging
-  console.log('🔍 AdvancedTaskFilters DEBUG:', {
-    currentUser: currentUser?.name,
-    role: currentUser?.role,
-    canUseAdvancedFilters,
-    selectedUser,
-    selectedAccessLevel,
-    selectedPriority,
-    userProfilesCount: userProfiles?.length || 0
-  });
+  console.log('🔍 AdvancedTaskFilters DEBUG:');
+  console.log('  👤 Current User:', currentUser?.name, '| Role:', currentUser?.role);
+  console.log('  ✅ Can Use Advanced Filters:', canUseAdvancedFilters);
+  console.log('  🎯 Selected User:', selectedUser);
+  console.log('  📊 Selected Access Level:', selectedAccessLevel);  
+  console.log('  🔥 Selected Priority:', selectedPriority);
+  console.log('  👥 User Profiles Count:', userProfiles?.length || 0);
+  if (userProfiles?.length > 0) {
+    console.log('  👥 User Profiles:', userProfiles.map(u => `${u.name} (${u.role})`));
+  }
 
   if (!canUseAdvancedFilters) {
     console.log('❌ AdvancedTaskFilters: Cannot use advanced filters');
@@ -106,7 +107,7 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label className="text-muted-foreground text-sm mb-2 block">Filtrar por Usuário Atribuído</Label>
-            <Select value={selectedUser} onValueChange={onUserChange}>
+            <Select value={selectedUser || 'all'} onValueChange={onUserChange}>
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue placeholder="Selecionar usuário atribuído..." />
               </SelectTrigger>
@@ -123,7 +124,7 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
 
           <div>
             <Label className="text-muted-foreground text-sm mb-2 block">Filtrar por Nível de Acesso</Label>
-            <Select value={selectedAccessLevel} onValueChange={onAccessLevelChange}>
+            <Select value={selectedAccessLevel || 'all'} onValueChange={onAccessLevelChange}>
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue placeholder="Selecionar nível de acesso..." />
               </SelectTrigger>
@@ -139,7 +140,7 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
 
           <div>
             <Label className="text-muted-foreground text-sm mb-2 block">Filtrar por Prioridade</Label>
-            <Select value={selectedPriority} onValueChange={onPriorityChange}>
+            <Select value={selectedPriority || 'all'} onValueChange={onPriorityChange}>
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue placeholder="Selecionar prioridade..." />
               </SelectTrigger>

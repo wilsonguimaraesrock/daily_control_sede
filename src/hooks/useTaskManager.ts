@@ -60,26 +60,29 @@ export const useTaskManager = () => {
       if (selectedAccessLevel !== 'all') params.append('accessLevel', selectedAccessLevel);
 
       // 🔍 DEBUG: Log filter parameters
-      console.log('🔍 useTaskManager loadTasks DEBUG:', {
-        currentUser: currentUser?.name,
-        role: currentUser?.role,
-        selectedUser,
-        selectedPriority,
-        selectedStatus,
-        selectedAccessLevel,
-        apiUrl: `${API_BASE_URL}/api/task-operations?${params}`,
-        paramsString: params.toString()
-      });
+      console.log('🔍 useTaskManager loadTasks DEBUG:');
+      console.log('  👤 Current User:', currentUser?.name, '| Role:', currentUser?.role);
+      console.log('  🎯 Selected User:', selectedUser);
+      console.log('  🔥 Selected Priority:', selectedPriority);
+      console.log('  📊 Selected Status:', selectedStatus);
+      console.log('  🏢 Selected Access Level:', selectedAccessLevel);
+      console.log('  🌐 API URL:', `${API_BASE_URL}/api/task-operations?${params}`);
+      console.log('  📝 Params String:', params.toString());
 
       const response = await fetch(`${API_BASE_URL}/api/task-operations?${params}`, {
         headers: getAuthHeaders()
       });
 
+      console.log('🔍 Task API Response Status:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
+        const errorText = await response.text();
+        console.error('❌ Task API Error:', response.status, errorText);
+        throw new Error(`Failed to fetch tasks: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('✅ Tasks loaded:', data?.length || 0, 'tasks');
       setTasks(data.tasks || data);
     } catch (error) {
       console.error('Erro ao carregar tarefas:', error);
@@ -103,13 +106,18 @@ export const useTaskManager = () => {
 
       if (response.ok) {
         const users = await response.json();
-        console.log('🔍 useTaskManager loadUserProfiles DEBUG:', {
-          usersCount: users?.length || 0,
-          users: users?.map(u => ({ name: u.name, role: u.role })) || []
-        });
+        console.log('🔍 useTaskManager loadUserProfiles DEBUG:');
+        console.log('  👥 Users Count:', users?.length || 0);
+        if (users?.length > 0) {
+          console.log('  👥 Users List:', users.map(u => `${u.name} (${u.role})`));
+        } else {
+          console.log('  ❌ No users found!');
+        }
         setUserProfiles(users);
       } else {
         console.error('❌ useTaskManager loadUserProfiles: Response not OK:', response.status);
+        const errorText = await response.text();
+        console.error('❌ Error details:', errorText);
       }
     } catch (error) {
       console.error('❌ useTaskManager loadUserProfiles error:', error);
