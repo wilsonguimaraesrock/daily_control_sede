@@ -39,7 +39,19 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
   // Todos os usuários autenticados podem usar os filtros avançados
   const canUseAdvancedFilters = currentUser && currentUser.role;
 
+  // 🔍 DEBUG: Log filter states for debugging
+  console.log('🔍 AdvancedTaskFilters DEBUG:', {
+    currentUser: currentUser?.name,
+    role: currentUser?.role,
+    canUseAdvancedFilters,
+    selectedUser,
+    selectedAccessLevel,
+    selectedPriority,
+    userProfilesCount: userProfiles?.length || 0
+  });
+
   if (!canUseAdvancedFilters) {
+    console.log('❌ AdvancedTaskFilters: Cannot use advanced filters');
     return null;
   }
 
@@ -95,10 +107,10 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue placeholder="Selecionar usuário atribuído..." />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="all">Todos os usuários</SelectItem>
+              <SelectContent className="bg-background border-border text-foreground shadow-lg">
+                <SelectItem value="all" className="text-foreground hover:bg-accent hover:text-accent-foreground">Todos os usuários</SelectItem>
                 {userList.map((user) => (
-                  <SelectItem key={user.user_id} value={user.user_id}>
+                  <SelectItem key={user.user_id} value={user.user_id} className="text-foreground hover:bg-accent hover:text-accent-foreground">
                     {user.name} ({user.role})
                   </SelectItem>
                 ))}
@@ -112,9 +124,9 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue placeholder="Selecionar nível de acesso..." />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border">
+              <SelectContent className="bg-background border-border text-foreground shadow-lg">
                 {accessLevels.map((level) => (
-                  <SelectItem key={level.value} value={level.value}>
+                  <SelectItem key={level.value} value={level.value} className="text-foreground hover:bg-accent hover:text-accent-foreground">
                     {level.label}
                   </SelectItem>
                 ))}
@@ -128,9 +140,9 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
               <SelectTrigger className="bg-muted border-border text-foreground">
                 <SelectValue placeholder="Selecionar prioridade..." />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border">
+              <SelectContent className="bg-background border-border text-foreground shadow-lg">
                 {priorities.map((priority) => (
-                  <SelectItem key={priority.value} value={priority.value}>
+                  <SelectItem key={priority.value} value={priority.value} className="text-foreground hover:bg-accent hover:text-accent-foreground">
                     {priority.label}
                   </SelectItem>
                 ))}
