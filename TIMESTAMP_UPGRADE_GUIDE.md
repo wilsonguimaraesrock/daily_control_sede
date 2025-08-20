@@ -72,7 +72,8 @@ npx prisma generate
 
 - **Desenvolvido**: 20/08/2025
 - **Commit**: `eacfd00`
-- **Status**: Pronto para aplicação em produção
+- **Status**: ✅ **APLICADO EM PRODUÇÃO**
+- **due_date convertido**: 20/08/2025 - DATE → TIMESTAMP(0)
 
 ---
 
