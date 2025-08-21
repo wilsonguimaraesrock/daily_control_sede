@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import Avatar from '@/components/ui/Avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Camera, Lock, Phone, Mail, Building2, Edit, Save, X, Eye, EyeOff } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { User, Camera, Lock, Phone, Mail, Building2, Edit, Save, X, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { sanitizeInput } from '@/utils/inputValidation';
 
@@ -20,6 +21,7 @@ const UserProfile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -125,8 +127,20 @@ const UserProfile: React.FC = () => {
       const updatedProfile = await response.json();
       console.log('✅ Profile updated:', updatedProfile);
       
+      // Update current user data to reflect changes immediately
+      if (currentUser) {
+        // Trigger a page refresh to update all user data
+        window.location.reload();
+      }
+      
       setIsEditing(false);
-      alert('Perfil atualizado com sucesso!');
+      setSuccessMessage('Perfil atualizado com sucesso! A página será recarregada para mostrar as mudanças.');
+      
+      // Clear success message after 3 seconds and reload
+      setTimeout(() => {
+        setSuccessMessage('');
+        window.location.reload();
+      }, 2000);
     } catch (error) {
       console.error('Error updating profile:', error);
       alert(error.message || 'Erro ao atualizar perfil. Tente novamente.');
@@ -174,7 +188,7 @@ const UserProfile: React.FC = () => {
 
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setIsChangingPassword(false);
-      alert('Senha alterada com sucesso!');
+      setSuccessMessage('Senha alterada com sucesso!');
     } catch (error) {
       console.error('Error changing password:', error);
       alert(error.message || 'Erro ao alterar senha. Verifique a senha atual.');
@@ -193,6 +207,7 @@ const UserProfile: React.FC = () => {
       avatarUrl: currentUser?.avatarUrl || ''
     });
     setIsEditing(false);
+    setSuccessMessage('');
   };
 
   if (!currentUser) return null;
@@ -225,6 +240,16 @@ const UserProfile: React.FC = () => {
             Gerencie suas informações pessoais e configurações de segurança
           </DialogDescription>
         </DialogHeader>
+
+        {/* Success Message */}
+        {successMessage && (
+          <Alert className="border-green-200 bg-green-50 text-green-800">
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
+              {successMessage}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -274,23 +299,25 @@ const UserProfile: React.FC = () => {
               <CardContent className="space-y-6">
                 {/* Avatar Section */}
                 <div className="flex flex-col items-center gap-4">
-                  <Avatar
-                    src={profileData.avatarUrl}
-                    name={profileData.name}
-                    size="xl"
-                    alt={profileData.name}
-                  />
+                  <div className="relative">
+                    <Avatar
+                      src={profileData.avatarUrl}
+                      name={profileData.name}
+                      size="xl"
+                      alt={profileData.name}
+                    />
+                    {isEditing && (
+                      <Label 
+                        htmlFor="avatar-upload" 
+                        className="absolute bottom-0 right-0 cursor-pointer bg-primary text-primary-foreground rounded-full p-2 hover:bg-primary/90 transition-colors shadow-lg"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </Label>
+                    )}
+                  </div>
                   
                   {isEditing && (
                     <div className="flex flex-col items-center gap-2">
-                      <Label htmlFor="avatar-upload" className="cursor-pointer">
-                        <Button variant="outline" size="sm" asChild>
-                          <span>
-                            <Camera className="w-4 h-4 mr-2" />
-                            Alterar Foto
-                          </span>
-                        </Button>
-                      </Label>
                       <Input
                         id="avatar-upload"
                         type="file"
@@ -298,7 +325,9 @@ const UserProfile: React.FC = () => {
                         onChange={handleAvatarUpload}
                         className="hidden"
                       />
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground text-center">
+                        Clique no ícone da câmera para alterar a foto
+                        <br />
                         Máximo 5MB (JPG, PNG, GIF)
                       </span>
                     </div>

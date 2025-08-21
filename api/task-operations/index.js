@@ -92,7 +92,8 @@ export default async function handler(req, res) {
               id: true,
               name: true,
               email: true,
-              role: true
+              role: true,
+              avatarUrl: true
             }
           },
           assignments: {
@@ -103,6 +104,7 @@ export default async function handler(req, res) {
                   name: true,
                   email: true,
                   role: true,
+              avatarUrl: true,
                   avatarUrl: true
                 }
               }
@@ -216,7 +218,8 @@ export default async function handler(req, res) {
               id: true,
               name: true,
               email: true,
-              role: true
+              role: true,
+              avatarUrl: true
             }
           },
           assignments: {
@@ -227,6 +230,7 @@ export default async function handler(req, res) {
                   name: true,
                   email: true,
                   role: true,
+              avatarUrl: true,
                   avatarUrl: true
                 }
               }
@@ -263,7 +267,8 @@ export default async function handler(req, res) {
                 id: true,
                 name: true,
                 email: true,
-                role: true
+                role: true,
+              avatarUrl: true
               }
             },
             assignments: {
@@ -274,6 +279,7 @@ export default async function handler(req, res) {
                     name: true,
                     email: true,
                     role: true,
+              avatarUrl: true,
                   avatarUrl: true
                   }
                 }
