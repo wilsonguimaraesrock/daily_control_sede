@@ -50,6 +50,9 @@ model UserProfile {
   role                  Role
   isActive              Boolean   @default(true) @map("is_active")
   passwordHash          String?   @map("password_hash")
+  avatarUrl             String?   @map("avatar_url")
+  phone                 String?
+  bio                   String?   @db.Text
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
   lastLogin             DateTime? @map("last_login") @db.Timestamp(0)
   firstLoginCompleted   Boolean?  @default(false) @map("first_login_completed")

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import Avatar from '@/components/ui/Avatar';
 import { Calendar, Clock, CheckCircle, User, Edit, History, Users, UserPlus } from 'lucide-react';
 import { Task } from '@/types/task';
 
@@ -94,24 +95,90 @@ const TaskCard: React.FC<TaskCardProps> = ({
         {/* Informações do criador e atribuição */}
         <div className="space-y-1">
           {/* Criador da tarefa - suporte para ambos formatos: createdBy (API) e created_by (frontend) */}
-          {((task as any).createdBy || task.created_by) && (
-            <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
-              <UserPlus className="w-3 h-3" />
-              <span className="text-xs">Criado por: <span className="text-blue-600 font-medium dark:text-blue-400">{getUserName((task as any).createdBy || task.created_by)}</span></span>
-            </div>
-          )}
+          {(() => {
+            const creator = (task as any).creator;
+            const creatorId = (task as any).createdBy || task.created_by;
+            
+            if (creator) {
+              // Se temos informações completas do criador da API
+              return (
+                <div className="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                  <UserPlus className="w-3 h-3" />
+                  <span className="text-xs">Criado por:</span>
+                  <div className="flex items-center gap-1">
+                    <Avatar
+                      src={creator.avatarUrl}
+                      name={creator.name}
+                      size="xs"
+                      alt={creator.name}
+                    />
+                    <span className="text-xs text-blue-600 font-medium dark:text-blue-400">
+                      {creator.name}
+                    </span>
+                  </div>
+                </div>
+              );
+            } else if (creatorId) {
+              // Fallback para apenas ID do criador
+              return (
+                <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
+                  <UserPlus className="w-3 h-3" />
+                  <span className="text-xs">Criado por: <span className="text-blue-600 font-medium dark:text-blue-400">{getUserName(creatorId)}</span></span>
+                </div>
+              );
+            }
+            
+            return null;
+          })()}
           
           {/* Usuários atribuídos - suporte para assignments (API) e assigned_users (frontend) */}
           {(() => {
             // Tentar assignments (formato da API) primeiro, depois assigned_users (formato frontend)
-            const assignedUserIds = (task as any).assignments?.map((assignment: any) => assignment.user?.userId || assignment.user?.id) || task.assigned_users || [];
+            const assignments = (task as any).assignments || [];
+            const assignedUserIds = task.assigned_users || [];
             
-            return assignedUserIds.length > 0 && (
-              <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
-                <Users className="w-3 h-3" />
-                <span className="text-xs">Atribuído: {assignedUserIds.map((userId: string) => getUserName(userId)).join(', ')}</span>
-              </div>
-            );
+            // Se temos assignments da API (com informações completas do usuário)
+            if (assignments.length > 0) {
+              return (
+                <div className="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                  <Users className="w-3 h-3" />
+                  <span className="text-xs">Atribuído:</span>
+                  <div className="flex items-center gap-1">
+                    {assignments.map((assignment: any, index: number) => {
+                      const user = assignment.user;
+                      if (!user) return null;
+                      
+                      return (
+                        <div key={user.id || index} className="flex items-center gap-1">
+                          <Avatar
+                            src={user.avatarUrl}
+                            name={user.name}
+                            size="xs"
+                            alt={user.name}
+                          />
+                          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                            {user.name}
+                          </span>
+                          {index < assignments.length - 1 && <span className="text-xs">,</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
+            
+            // Fallback para assigned_users (apenas IDs)
+            if (assignedUserIds.length > 0) {
+              return (
+                <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
+                  <Users className="w-3 h-3" />
+                  <span className="text-xs">Atribuído: {assignedUserIds.map((userId: string) => getUserName(userId)).join(', ')}</span>
+                </div>
+              );
+            }
+            
+            return null;
           })()}
         </div>
 

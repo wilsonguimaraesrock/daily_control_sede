@@ -6,6 +6,7 @@ import { LogOut, Crown, Shield, User, GraduationCap, UserCheck, FileText, UserCo
 import { useAuth } from '@/hooks/useAuth';
 import { OrganizationSelector } from './OrganizationSelector';
 import NotificationCenter from './NotificationCenter';
+import UserProfile from './UserProfile';
 import Logo from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { getRoleIcon, getRoleColor, getRoleLabel, getOrganizationTitle } from '@/utils/permissions';
@@ -53,17 +54,8 @@ const UserHeader: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-3">
-              {/* User Info */}
-              <div className="hidden sm:flex items-center gap-3">
-                <div className="text-right">
-                  <div className="font-medium text-primary-foreground dark:text-white">
-                    {currentUser.name}
-                  </div>
-                  <Badge className={getRoleColor(currentUser.role)} variant="secondary">
-                    {getRoleLabel(currentUser.role)}
-                  </Badge>
-                </div>
-              </div>
+              {/* User Profile */}
+              <UserProfile />
               
               <ThemeToggle />
               <NotificationCenter />
