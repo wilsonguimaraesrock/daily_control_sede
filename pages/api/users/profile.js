@@ -31,9 +31,12 @@ export default async function handler(req, res) {
 
   const { user } = authResult;
 
+  console.log('🔍 USER PROFILE API - Token user object:', JSON.stringify(user, null, 2));
+
   try {
     if (req.method === 'GET') {
       // Get user profile
+      console.log('🔍 USER PROFILE API - Searching for user with id:', user.id);
       const userProfile = await prisma.userProfile.findUnique({
         where: { id: user.id },
         select: {
@@ -60,7 +63,10 @@ export default async function handler(req, res) {
         }
       });
 
+      console.log('🔍 USER PROFILE API - Query result:', userProfile ? 'User found' : 'User NOT found');
+      
       if (!userProfile) {
+        console.log('❌ USER PROFILE API - User not found with id:', user.id);
         return res.status(404).json({ error: 'User profile not found' });
       }
 
