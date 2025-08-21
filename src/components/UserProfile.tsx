@@ -103,7 +103,7 @@ const UserProfile: React.FC = () => {
         throw new Error('Token de autenticação não encontrado');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+      const response = await fetch(`${API_BASE_URL}/api/user-profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -154,7 +154,7 @@ const UserProfile: React.FC = () => {
         throw new Error('Token de autenticação não encontrado');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+      const response = await fetch(`${API_BASE_URL}/api/user-profile`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
