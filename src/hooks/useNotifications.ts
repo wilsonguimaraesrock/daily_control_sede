@@ -366,6 +366,28 @@ export const useNotifications = () => {
     });
   };
 
+  /**
+   * ✅ NOTIFICAR TAREFA INICIADA/ANALISADA - NOVA FUNCIONALIDADE
+   * 
+   * Função específica para notificar o criador da tarefa quando ela é iniciada/analisada.
+   * Chamada apenas quando o status muda para 'EM_ANDAMENTO' e o usuário atual não é o criador.
+   * Não causa re-renders automáticos ou verificações periódicas.
+   */
+  const notifyTaskStarted = (taskTitle: string, startedBy?: string) => {
+    if (!currentUser) return null;
+
+    const title = '🔍 Tarefa Iniciada';
+    const body = startedBy 
+      ? `${startedBy} começou a analisar a tarefa: "${taskTitle}"`
+      : `Tarefa iniciada: "${taskTitle}"`;
+
+    return sendNativeNotification(title, {
+      body,
+      tag: `task-started-${Date.now()}`, // Tag única para evitar agrupamento
+      icon: '/rockfeller-favicon.png'
+    });
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return {
@@ -384,6 +406,7 @@ export const useNotifications = () => {
     // ✅ Novas funções específicas para notificações de tarefa
     notifyTaskAssigned,
     notifyTaskCompleted,
+    notifyTaskStarted,
     sendNativeNotification
   };
 }; 

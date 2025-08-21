@@ -47,7 +47,7 @@ export const useTaskManager = () => {
 
   const { currentUser } = useAuth();
   const { toast } = useToast();
-  const { notifyTaskCompleted, notifyTaskAssigned } = useNotifications();
+  const { notifyTaskCompleted, notifyTaskAssigned, notifyTaskStarted } = useNotifications();
 
   // 🔄 CARREGAR TAREFAS
   const loadTasks = useCallback(async () => {
@@ -241,6 +241,28 @@ export const useTaskManager = () => {
           
           // Enviar notificação para o criador
           notifyTaskCompleted(originalTask.title, currentUser.name);
+        }
+      }
+
+      // 🔔 NOTIFICAÇÃO: Tarefa iniciada/analisada
+      if (updates.status && 
+          (updates.status.toLowerCase() === 'em_andamento' || updates.status === 'EM_ANDAMENTO') &&
+          originalTask && 
+          currentUser) {
+        
+        // Verificar se o usuário atual não é o criador da tarefa
+        const creatorId = (originalTask as any).creator?.id || (originalTask as any).createdBy || originalTask.created_by;
+        
+        if (creatorId && creatorId !== currentUser.id) {
+          console.log('🔔 Enviando notificação de início:', {
+            taskTitle: originalTask.title,
+            creatorId,
+            currentUserId: currentUser.id,
+            currentUserName: currentUser.name
+          });
+          
+          // Enviar notificação para o criador
+          notifyTaskStarted(originalTask.title, currentUser.name);
         }
       }
       
