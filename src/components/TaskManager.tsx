@@ -441,16 +441,22 @@ const TaskManager = () => {
     if (isEditingTask) return;
     
     setIsEditingTask(true);
+    
+    // 🔧 DEBUG: Log dados sendo enviados
+    const updateData = {
+      title: editTask.title,
+      description: editTask.description,
+      status: editTask.status,
+      priority: editTask.priority,
+      dueDate: editTask.due_date, // 🔧 FIX: Mapear due_date para dueDate
+      assigned_users: editTask.assigned_users,
+      isPrivate: editTask.is_private // 🔧 FIX: Mapear is_private para isPrivate
+    };
+    
+    console.log('🔧 handleEditTask - Enviando dados:', updateData);
+    
     try {
-      const success = await updateTask(editTask.id, {
-        title: editTask.title,
-        description: editTask.description,
-        status: editTask.status,
-        priority: editTask.priority,
-        due_date: editTask.due_date,
-        assigned_users: editTask.assigned_users,
-        is_private: editTask.is_private
-      });
+      const success = await updateTask(editTask.id, updateData);
       if (success) {
         setEditTask({
           id: '',

@@ -207,14 +207,24 @@ export const useTaskManager = () => {
       // 🔍 Obter tarefa original para verificar notificações
       const originalTask = tasks.find(task => task.id === taskId);
       
+      console.log('🔧 updateTask - Enviando para API:', {
+        taskId,
+        updates,
+        url: `${API_BASE_URL}/api/tasks/${taskId}`
+      });
+      
       const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(updates)
       });
 
+      console.log('🔧 updateTask - Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to update task');
+        const errorText = await response.text();
+        console.error('🔧 updateTask - Error response:', errorText);
+        throw new Error(`Failed to update task: ${response.status} - ${errorText}`);
       }
 
       const updatedTask = await response.json();

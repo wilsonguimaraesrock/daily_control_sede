@@ -93,8 +93,18 @@ export default async function handler(req, res) {
       }
 
       // Check if user can edit this task
+      console.log('🔒 Checking edit permissions:', {
+        userRole: user.role,
+        userId: user.id,
+        userUserId: user.userId,
+        taskCreatedBy: existingTask.createdBy,
+        isSuperAdmin: user.role === 'super_admin',
+        isAdmin: user.role === 'admin'
+      });
+      
       const canEdit = user.role === 'super_admin' || 
                      user.role === 'admin' || 
+                     existingTask.createdBy === user.id ||  // 🔧 FIX: usar user.id 
                      existingTask.createdBy === user.userId ||
                      existingTask.createdBy === user.user_id;
 
@@ -148,6 +158,31 @@ export default async function handler(req, res) {
 
       console.log('📝 Final update data:', updateData);
 
+      // 🔧 Handle assigned_users update
+      if (req.body.assigned_users !== undefined && Array.isArray(req.body.assigned_users)) {
+        console.log('👥 Updating assigned users:', req.body.assigned_users);
+        
+        // Delete existing assignments
+        await prisma.taskAssignment.deleteMany({
+          where: { taskId: taskId }
+        });
+        
+        // Create new assignments if any
+        if (req.body.assigned_users.length > 0) {
+          const assignmentData = req.body.assigned_users.map(userId => ({
+            taskId: taskId,
+            userId: userId
+          }));
+          
+          await prisma.taskAssignment.createMany({
+            data: assignmentData,
+            skipDuplicates: true
+          });
+          
+          console.log('✅ Assignments updated:', assignmentData);
+        }
+      }
+
       // Update the task
       const updatedTask = await prisma.task.update({
         where: { id: taskId },
@@ -196,6 +231,7 @@ export default async function handler(req, res) {
       // Check if user can delete this task
       const canDelete = user.role === 'super_admin' || 
                        user.role === 'admin' || 
+                       existingTask.createdBy === user.id ||  // 🔧 FIX: usar user.id
                        existingTask.createdBy === user.userId ||
                        existingTask.createdBy === user.user_id;
 
