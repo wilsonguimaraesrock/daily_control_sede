@@ -163,22 +163,58 @@ const TaskManager = () => {
   };
 
   const canEditTask = (task: Task): boolean => {
-    if (!currentUser) return false;
+    if (!currentUser) {
+      console.log('🚫 canEditTask: No currentUser');
+      return false;
+    }
+    
+    console.log('🔍 canEditTask DEBUG:', {
+      taskId: task.id,
+      taskTitle: task.title,
+      currentUserRole: currentUser.role,
+      currentUserId: currentUser.id,
+      currentUserUserId: currentUser.userId,
+      taskCreatedBy: task.createdBy,
+      taskCreator: (task as any).creator,
+      isSuperAdmin: currentUser.role === 'super_admin',
+      isAdmin: currentUser.role === 'admin'
+    });
     
     // Admins e super_admins podem editar qualquer tarefa
-    if (currentUser.role === 'admin' || currentUser.role === 'super_admin') return true;
+    if (currentUser.role === 'admin' || currentUser.role === 'super_admin') {
+      console.log('✅ canEditTask: Admin/Super_admin access granted');
+      return true;
+    }
     
-    // Criador da tarefa pode editar
-    if (task.createdBy === currentUser.userId) return true;
+    // Criador da tarefa pode editar - verificar múltiplos campos
+    const creatorId = (task as any).creator?.id || (task as any).createdBy || task.created_by;
+    const isCreator = creatorId === currentUser.id || 
+                     creatorId === currentUser.userId ||
+                     task.createdBy === currentUser.userId ||
+                     task.createdBy === currentUser.id;
+    
+    if (isCreator) {
+      console.log('✅ canEditTask: Creator access granted');
+      return true;
+    }
     
     // 🔧 FIX: Usuários atribuídos à tarefa podem gerenciar suas tarefas
     const isAssignedToTask = task.assignments?.some((assignment: any) => 
       assignment.user?.userId === currentUser.userId || 
       assignment.user?.id === currentUser.userId ||
-      assignment.userId === currentUser.userId
-    ) || task.assigned_users?.includes(currentUser.userId);
+      assignment.user?.id === currentUser.id ||
+      assignment.userId === currentUser.userId ||
+      assignment.userId === currentUser.id
+    ) || task.assigned_users?.includes(currentUser.userId) ||
+         task.assigned_users?.includes(currentUser.id);
     
-    return isAssignedToTask;
+    if (isAssignedToTask) {
+      console.log('✅ canEditTask: Assigned user access granted');
+      return true;
+    }
+    
+    console.log('🚫 canEditTask: Access denied');
+    return false;
   };
 
   const canEditTaskFull = canEditTask;
