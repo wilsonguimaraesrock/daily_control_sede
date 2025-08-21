@@ -46,12 +46,13 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
   console.log('🔍 AdvancedTaskFilters DEBUG:');
   console.log('  👤 Current User:', currentUser?.name, '| Role:', currentUser?.role);
   console.log('  ✅ Can Use Advanced Filters:', canUseAdvancedFilters);
-  console.log('  🎯 Selected User:', selectedUser);
-  console.log('  📊 Selected Access Level:', selectedAccessLevel);  
-  console.log('  🔥 Selected Priority:', selectedPriority);
+  console.log('  🎯 Selected User:', selectedUser, typeof selectedUser);
+  console.log('  📊 Selected Access Level:', selectedAccessLevel, typeof selectedAccessLevel);  
+  console.log('  🔥 Selected Priority:', selectedPriority, typeof selectedPriority);
   console.log('  👥 User Profiles Count:', userProfiles?.length || 0);
   if (userProfiles?.length > 0) {
     console.log('  👥 User Profiles:', userProfiles.map(u => `${u.name} (${u.role})`));
+    console.log('  🆔 User IDs:', userProfiles.map(u => u.user_id || u.userId || u.id));
   }
 
   if (!canUseAdvancedFilters) {
@@ -114,7 +115,7 @@ const AdvancedTaskFilters: React.FC<AdvancedTaskFiltersProps> = ({
               <SelectContent className="bg-background border-border text-foreground shadow-lg">
                 <SelectItem value="all" className="text-foreground hover:bg-accent hover:text-accent-foreground">Todos os usuários</SelectItem>
                 {userList.map((user) => (
-                  <SelectItem key={user.user_id} value={user.user_id} className="text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <SelectItem key={user.user_id || user.userId || user.id} value={user.user_id || user.userId || user.id} className="text-foreground hover:bg-accent hover:text-accent-foreground">
                     {user.name} ({user.role})
                   </SelectItem>
                 ))}

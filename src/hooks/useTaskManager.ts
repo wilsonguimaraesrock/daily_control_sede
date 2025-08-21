@@ -54,18 +54,25 @@ export const useTaskManager = () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedStatus !== 'all') params.append('status', selectedStatus);
-      if (selectedPriority !== 'all') params.append('priority', selectedPriority);
-      if (selectedUser !== 'all') params.append('assignedTo', selectedUser);
-      if (selectedAccessLevel !== 'all') params.append('accessLevel', selectedAccessLevel);
+      
+      // 🔧 FIX: Validate filter values and prevent undefined/null
+      const validStatus = selectedStatus && selectedStatus !== 'all' ? selectedStatus : null;
+      const validPriority = selectedPriority && selectedPriority !== 'all' ? selectedPriority : null;
+      const validUser = selectedUser && selectedUser !== 'all' && selectedUser !== 'undefined' ? selectedUser : null;
+      const validAccessLevel = selectedAccessLevel && selectedAccessLevel !== 'all' ? selectedAccessLevel : null;
+      
+      if (validStatus) params.append('status', validStatus);
+      if (validPriority) params.append('priority', validPriority);
+      if (validUser) params.append('assignedTo', validUser);
+      if (validAccessLevel) params.append('accessLevel', validAccessLevel);
 
       // 🔍 DEBUG: Log filter parameters
       console.log('🔍 useTaskManager loadTasks DEBUG:');
       console.log('  👤 Current User:', currentUser?.name, '| Role:', currentUser?.role);
-      console.log('  🎯 Selected User:', selectedUser);
-      console.log('  🔥 Selected Priority:', selectedPriority);
-      console.log('  📊 Selected Status:', selectedStatus);
-      console.log('  🏢 Selected Access Level:', selectedAccessLevel);
+      console.log('  🎯 Selected User:', selectedUser, '→ Valid:', validUser);
+      console.log('  🔥 Selected Priority:', selectedPriority, '→ Valid:', validPriority);
+      console.log('  📊 Selected Status:', selectedStatus, '→ Valid:', validStatus);
+      console.log('  🏢 Selected Access Level:', selectedAccessLevel, '→ Valid:', validAccessLevel);
       console.log('  🌐 API URL:', `${API_BASE_URL}/api/task-operations?${params}`);
       console.log('  📝 Params String:', params.toString());
 

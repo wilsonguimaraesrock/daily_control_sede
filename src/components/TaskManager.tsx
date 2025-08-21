@@ -101,6 +101,22 @@ const TaskManager = () => {
     setSelectedPriority('all');
   };
 
+  // 🔧 FIX: Wrapper functions to ensure values are never undefined
+  const handleUserChange = (value: string) => {
+    console.log('🔧 User filter changed:', value);
+    setSelectedUser(value || 'all');
+  };
+
+  const handleAccessLevelChange = (value: string) => {
+    console.log('🔧 Access level filter changed:', value);
+    setSelectedAccessLevel(value || 'all');
+  };
+
+  const handlePriorityChange = (value: string) => {
+    console.log('🔧 Priority filter changed:', value);
+    setSelectedPriority(value || 'all');
+  };
+
   const getFilterCount = (filter: 'all' | 'today' | 'week' | 'month' | 'overdue'): number => {
     const today = new Date();
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
@@ -826,11 +842,11 @@ const TaskManager = () => {
         {/* Filtros avançados */}
         <AdvancedTaskFilters
           selectedUser={selectedUser}
-          onUserChange={setSelectedUser}
+          onUserChange={handleUserChange}
           selectedAccessLevel={selectedAccessLevel}
-          onAccessLevelChange={setSelectedAccessLevel}
+          onAccessLevelChange={handleAccessLevelChange}
           selectedPriority={selectedPriority}
-          onPriorityChange={setSelectedPriority}
+          onPriorityChange={handlePriorityChange}
           userProfiles={userProfiles}
           onClearFilters={clearAdvancedFilters}
         />
