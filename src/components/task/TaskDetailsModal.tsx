@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, CheckCircle, User, Play, X, Trash2, Users } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, User, Play, X, Trash2, Users, Edit } from 'lucide-react';
 import { Task } from '@/types/task';
 import { getStatusColor, getPriorityColor, getStatusLabel, getPriorityLabel } from '@/utils/taskUtils';
 import { formatDateToBR, formatDateTimeToBR } from '@/utils/dateUtils';
@@ -15,6 +15,7 @@ interface TaskDetailsModalProps {
   onClose: () => void;
   onUpdateStatus: (taskId: string, status: Task['status']) => void;
   onDeleteTask?: (taskId: string) => void;
+  onEditTask?: (task: Task) => void;
   canEdit: boolean;
   canDelete?: boolean;
   isUpdating: boolean;
@@ -27,6 +28,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
   onClose,
   onUpdateStatus,
   onDeleteTask,
+  onEditTask,
   canEdit,
   canDelete = false,
   isUpdating,
@@ -39,6 +41,21 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     if (!canEdit && !canDelete) return null;
 
     const statusButtons = [];
+    
+    // 🎯 BOTÃO DE EDITAR - Sempre visível se pode editar
+    if (canEdit && onEditTask) {
+      statusButtons.push(
+        <Button
+          key="edit"
+          onClick={() => onEditTask(task)}
+          variant="outline"
+          className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+        >
+          <Edit className="w-4 h-4 mr-2" />
+          Editar Tarefa
+        </Button>
+      );
+    }
     
     // Botões de status apenas se pode editar
     if (canEdit) {

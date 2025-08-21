@@ -163,41 +163,16 @@ const TaskManager = () => {
   };
 
   const canEditTask = (task: Task): boolean => {
-    if (!currentUser) {
-      console.log('🚫 canEditTask: No currentUser');
-      return false;
-    }
-    
-    console.log('🔍 canEditTask DEBUG:', {
-      taskId: task.id,
-      taskTitle: task.title,
-      currentUserRole: currentUser.role,
-      currentUserId: currentUser.id,
-      currentUserUserId: currentUser.userId,
-      taskCreatedBy: task.createdBy,
-      taskCreator: (task as any).creator,
-      isSuperAdmin: currentUser.role === 'super_admin',
-      isAdmin: currentUser.role === 'admin',
-      allCurrentUserFields: currentUser
-    });
+    if (!currentUser) return false;
     
     // 🔒 SUPER ADMIN: Sempre tem acesso total (PRIORIDADE MÁXIMA)
-    if (currentUser.role === 'super_admin') {
-      console.log('👑 canEditTask: SUPER_ADMIN access granted - unlimited power');
-      return true;
-    }
+    if (currentUser.role === 'super_admin') return true;
     
     // 🔒 ADMIN: Pode editar qualquer tarefa da organização
-    if (currentUser.role === 'admin') {
-      console.log('✅ canEditTask: Admin access granted');
-      return true;
-    }
+    if (currentUser.role === 'admin') return true;
     
     // 🔒 FRANCHISE ADMIN: Também tem poderes elevados
-    if (currentUser.role === 'franchise_admin') {
-      console.log('✅ canEditTask: Franchise admin access granted');
-      return true;
-    }
+    if (currentUser.role === 'franchise_admin') return true;
     
     // Criador da tarefa pode editar - verificar múltiplos campos
     const creatorId = (task as any).creator?.id || (task as any).createdBy || task.created_by;
@@ -206,10 +181,7 @@ const TaskManager = () => {
                      task.createdBy === currentUser.userId ||
                      task.createdBy === currentUser.id;
     
-    if (isCreator) {
-      console.log('✅ canEditTask: Creator access granted');
-      return true;
-    }
+    if (isCreator) return true;
     
     // 🔧 FIX: Usuários atribuídos à tarefa podem gerenciar suas tarefas
     const isAssignedToTask = task.assignments?.some((assignment: any) => 
@@ -221,13 +193,7 @@ const TaskManager = () => {
     ) || task.assigned_users?.includes(currentUser.userId) ||
          task.assigned_users?.includes(currentUser.id);
     
-    if (isAssignedToTask) {
-      console.log('✅ canEditTask: Assigned user access granted');
-      return true;
-    }
-    
-    console.log('🚫 canEditTask: Access denied for role:', currentUser.role);
-    return false;
+    return isAssignedToTask;
   };
 
   const canEditTaskFull = canEditTask;
@@ -536,8 +502,8 @@ const TaskManager = () => {
       priority: task.priority,
       due_date: task.due_date || '',
       due_time: extractTimeForInput(task.due_date || ''),
-      assigned_users: task.assigned_users,
-      is_private: task.is_private
+      assigned_users: task.assigned_users || [], // 🔧 FIX: Garantir que seja sempre um array
+      is_private: task.is_private || false
     });
     setIsEditDialogOpen(true);
   };
@@ -714,8 +680,8 @@ const TaskManager = () => {
                       getStatusLabel={getStatusLabel}
                       getPriorityLabel={getPriorityLabel}
                       getUserName={getUserNameFallback}
-                      canEditTask={() => canEditTaskFull(task)}
-                      onEditTask={handleOpenEditDialog}
+                      canEditTask={false}
+                      onEditTask={undefined}
                       onViewTask={handleTaskClick}
                     />
                   ))
@@ -817,8 +783,8 @@ const TaskManager = () => {
                     getStatusLabel={getStatusLabel}
                     getPriorityLabel={getPriorityLabel}
                     getUserName={getUserNameFallback}
-                    canEditTask={() => canEditTaskFull(task)}
-                    onEditTask={handleOpenEditDialog}
+                    canEditTask={false}
+                    onEditTask={undefined}
                     onViewTask={handleTaskClick}
                   />
                 ))}
@@ -1131,6 +1097,10 @@ const TaskManager = () => {
           updateTaskStatus(taskId, newStatus);
         }}
         onDeleteTask={handleDeleteTask}
+        onEditTask={(task) => {
+          handleOpenEditDialog(task);
+          setIsTaskDetailsOpen(false); // Fechar modal de detalhes
+        }}
         canEdit={selectedTask ? canEditTask(selectedTask) : false}
         canDelete={selectedTask ? canDeleteTask(selectedTask) : false}
         isUpdating={!!updatingTask}
