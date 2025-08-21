@@ -14,6 +14,7 @@ interface TaskCardProps {
   getUserName: (userId: string) => string;
   canEditTask?: (() => boolean) | boolean;
   onEditTask?: (task: Task) => void;
+  onViewTask?: (task: Task) => void;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -25,7 +26,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   getPriorityLabel,
   getUserName,
   canEditTask,
-  onEditTask
+  onEditTask,
+  onViewTask
 }) => {
   const handleEditClick = () => {
     if (onEditTask) {
@@ -33,8 +35,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
 
+  const handleCardClick = () => {
+    if (onViewTask) {
+      onViewTask(task);
+    }
+  };
+
   // Verifica se pode editar - pode ser uma função ou um boolean
   const canEdit = typeof canEditTask === 'function' ? canEditTask() : canEditTask;
+
+  // Função para truncar texto
+  const truncateText = (text: string, maxLength: number = 60) => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + '...';
+  };
 
   // Extrair horário da data de vencimento
   const getTimeFromDate = (dateString: string | undefined) => {
@@ -50,7 +64,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   return (
-    <div className="bg-muted border-2 border-border rounded-lg p-3 transition-all duration-200 shadow-sm hover:shadow-md dark:bg-slate-700/80 dark:border dark:border-slate-600/50 dark:hover:bg-slate-700/90">
+    <div 
+      className={`bg-muted border-2 border-border rounded-lg p-3 transition-all duration-200 shadow-sm hover:shadow-md dark:bg-slate-700/80 dark:border dark:border-slate-600/50 dark:hover:bg-slate-700/90 ${onViewTask ? 'cursor-pointer hover:border-primary/50 dark:hover:border-primary/50' : ''}`}
+      onClick={onViewTask ? handleCardClick : undefined}
+    >
       <div className="space-y-2">
         {/* Título e horário */}
         <div className="flex items-start justify-between">
@@ -59,7 +76,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
               <h3 className="text-foreground font-medium text-sm leading-tight dark:text-white">{task.title}</h3>
               {canEdit && (
                 <button
-                  onClick={handleEditClick}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditClick();
+                  }}
                   className="p-0.5 text-slate-400 hover:text-blue-400 transition-colors opacity-60 hover:opacity-100"
                   title="Editar tarefa"
                 >
@@ -76,9 +96,18 @@ const TaskCard: React.FC<TaskCardProps> = ({
           </div>
         </div>
 
-        {/* Description se existir */}
+        {/* Description se existir - truncada */}
         {task.description && (
-          <p className="text-muted-foreground text-xs leading-relaxed dark:text-slate-400">{task.description}</p>
+          <div className="group">
+            <p className="text-muted-foreground text-xs leading-relaxed dark:text-slate-400">
+              {truncateText(task.description)}
+            </p>
+            {task.description.length > 60 && onViewTask && (
+              <p className="text-xs text-primary/70 dark:text-primary/80 font-medium mt-1 group-hover:text-primary transition-colors">
+                Clique para ver observação completa
+              </p>
+            )}
+          </div>
         )}
 
         {/* Badges de status e prioridade */}

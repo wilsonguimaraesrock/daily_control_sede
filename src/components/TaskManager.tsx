@@ -656,23 +656,19 @@ const TaskManager = () => {
                   </div>
                 ) : (
                   dayTasks.map((task) => (
-                    <div
+                    <TaskCard
                       key={task.id}
-                      className="cursor-pointer"
-                      onClick={() => handleTaskClick(task)}
-                    >
-                      <TaskCard
-                        task={task}
-                        actionButtons={<div />}
-                        getStatusColor={getStatusColor}
-                        getPriorityColor={getPriorityColor}
-                        getStatusLabel={getStatusLabel}
-                        getPriorityLabel={getPriorityLabel}
-                        getUserName={getUserNameFallback}
-                        canEditTask={() => canEditTaskFull(task)}
-                        onEditTask={handleOpenEditDialog}
-                      />
-                    </div>
+                      task={task}
+                      actionButtons={<div />}
+                      getStatusColor={getStatusColor}
+                      getPriorityColor={getPriorityColor}
+                      getStatusLabel={getStatusLabel}
+                      getPriorityLabel={getPriorityLabel}
+                      getUserName={getUserNameFallback}
+                      canEditTask={() => canEditTaskFull(task)}
+                      onEditTask={handleOpenEditDialog}
+                      onViewTask={handleTaskClick}
+                    />
                   ))
                 )}
               </div>
@@ -763,23 +759,19 @@ const TaskManager = () => {
               </div>
               <div className="flex-1 space-y-2">
                 {hourTasks.map((task) => (
-                  <div
+                  <TaskCard
                     key={task.id}
-                    className="cursor-pointer"
-                    onClick={() => handleTaskClick(task)}
-                  >
-                    <TaskCard
-                      task={task}
-                      actionButtons={<div />}
-                      getStatusColor={getStatusColor}
-                      getPriorityColor={getPriorityColor}
-                      getStatusLabel={getStatusLabel}
-                      getPriorityLabel={getPriorityLabel}
-                      getUserName={getUserNameFallback}
-                      canEditTask={() => canEditTaskFull(task)}
-                      onEditTask={handleOpenEditDialog}
-                    />
-                  </div>
+                    task={task}
+                    actionButtons={<div />}
+                    getStatusColor={getStatusColor}
+                    getPriorityColor={getPriorityColor}
+                    getStatusLabel={getStatusLabel}
+                    getPriorityLabel={getPriorityLabel}
+                    getUserName={getUserNameFallback}
+                    canEditTask={() => canEditTaskFull(task)}
+                    onEditTask={handleOpenEditDialog}
+                    onViewTask={handleTaskClick}
+                  />
                 ))}
               </div>
             </div>
