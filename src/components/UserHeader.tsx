@@ -54,8 +54,16 @@ const UserHeader: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-3">
-              {/* User Profile */}
-              <UserProfile />
+              {/* User Profile - TESTE */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2 text-primary-foreground hover:bg-white/10 dark:text-white dark:hover:bg-slate-700/50"
+                onClick={() => alert('Teste: Perfil clicado!')}
+              >
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">{currentUser.name}</span>
+              </Button>
               
               <ThemeToggle />
               <NotificationCenter />
