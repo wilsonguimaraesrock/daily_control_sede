@@ -177,12 +177,25 @@ const TaskManager = () => {
       taskCreatedBy: task.createdBy,
       taskCreator: (task as any).creator,
       isSuperAdmin: currentUser.role === 'super_admin',
-      isAdmin: currentUser.role === 'admin'
+      isAdmin: currentUser.role === 'admin',
+      allCurrentUserFields: currentUser
     });
     
-    // Admins e super_admins podem editar qualquer tarefa
-    if (currentUser.role === 'admin' || currentUser.role === 'super_admin') {
-      console.log('✅ canEditTask: Admin/Super_admin access granted');
+    // 🔒 SUPER ADMIN: Sempre tem acesso total (PRIORIDADE MÁXIMA)
+    if (currentUser.role === 'super_admin') {
+      console.log('👑 canEditTask: SUPER_ADMIN access granted - unlimited power');
+      return true;
+    }
+    
+    // 🔒 ADMIN: Pode editar qualquer tarefa da organização
+    if (currentUser.role === 'admin') {
+      console.log('✅ canEditTask: Admin access granted');
+      return true;
+    }
+    
+    // 🔒 FRANCHISE ADMIN: Também tem poderes elevados
+    if (currentUser.role === 'franchise_admin') {
+      console.log('✅ canEditTask: Franchise admin access granted');
       return true;
     }
     
@@ -213,7 +226,7 @@ const TaskManager = () => {
       return true;
     }
     
-    console.log('🚫 canEditTask: Access denied');
+    console.log('🚫 canEditTask: Access denied for role:', currentUser.role);
     return false;
   };
 
