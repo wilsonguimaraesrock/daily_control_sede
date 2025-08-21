@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Task } from '@/types/task';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/hooks/useNotifications';
 
 /**
  * 🎯 HOOK GERENCIADOR DE TAREFAS - SISTEMA SIMPLIFICADO
@@ -46,6 +47,7 @@ export const useTaskManager = () => {
 
   const { currentUser } = useAuth();
   const { toast } = useToast();
+  const { notifyTaskCompleted, notifyTaskAssigned } = useNotifications();
 
   // 🔄 CARREGAR TAREFAS
   const loadTasks = useCallback(async () => {
@@ -141,6 +143,7 @@ export const useTaskManager = () => {
         console.log('🔄 UseTaskManager - dueDate length:', taskData.dueDate.length);
         console.log('🔄 UseTaskManager - dueDate includes ":":', taskData.dueDate.includes(':'));
       }
+      
       const response = await fetch(`${API_BASE_URL}/api/task-operations`, {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -153,6 +156,32 @@ export const useTaskManager = () => {
 
       const newTask = await response.json();
       setTasks(prev => [newTask, ...prev]);
+      
+      // 🔔 NOTIFICAÇÃO: Tarefa atribuída
+      // Verificar se a tarefa foi atribuída a outros usuários (não incluindo o criador)
+      const assignedUserIds = (taskData as any).assignedUserIds || [];
+      if (assignedUserIds.length > 0 && currentUser) {
+        
+        console.log('🔔 Verificando notificações de atribuição:', {
+          taskTitle: newTask.title,
+          assignedUserIds,
+          creatorId: currentUser.id,
+          creatorName: currentUser.name
+        });
+        
+        // Enviar notificação para cada usuário atribuído (exceto o criador)
+        assignedUserIds.forEach((userId: string) => {
+          if (userId !== currentUser.id) {
+            // Por enquanto, enviar notificação genérica
+            // TODO: Implementar sistema de notificação por usuário específico
+            console.log(`🔔 Notificação seria enviada para usuário ${userId} sobre tarefa "${newTask.title}"`);
+            
+            // Para agora, registrar que a notificação seria enviada
+            // Em uma implementação completa, precisaríamos de WebSockets ou polling
+            // para notificar usuários específicos quando eles estão online
+          }
+        });
+      }
       
       toast({
         title: "Tarefa criada",
@@ -175,6 +204,9 @@ export const useTaskManager = () => {
   // ✏️ ATUALIZAR TAREFA
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
     try {
+      // 🔍 Obter tarefa original para verificar notificações
+      const originalTask = tasks.find(task => task.id === taskId);
+      
       const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
@@ -189,6 +221,28 @@ export const useTaskManager = () => {
       setTasks(prev => prev.map(task => 
         task.id === taskId ? updatedTask : task
       ));
+      
+      // 🔔 NOTIFICAÇÃO: Tarefa concluída
+      if (updates.status && 
+          (updates.status.toLowerCase() === 'concluida' || updates.status === 'CONCLUIDA') &&
+          originalTask && 
+          currentUser) {
+        
+        // Verificar se o usuário atual não é o criador da tarefa
+        const creatorId = (originalTask as any).creator?.id || (originalTask as any).createdBy || originalTask.created_by;
+        
+        if (creatorId && creatorId !== currentUser.id) {
+          console.log('🔔 Enviando notificação de conclusão:', {
+            taskTitle: originalTask.title,
+            creatorId,
+            currentUserId: currentUser.id,
+            currentUserName: currentUser.name
+          });
+          
+          // Enviar notificação para o criador
+          notifyTaskCompleted(originalTask.title, currentUser.name);
+        }
+      }
       
       toast({
         title: "Tarefa atualizada",

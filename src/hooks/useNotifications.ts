@@ -102,17 +102,40 @@ export const useNotifications = () => {
   };
 
   /**
-   * 🚫 ENVIO DE NOTIFICAÇÕES NATIVAS - DESATIVADO
+   * ✅ ENVIO DE NOTIFICAÇÕES NATIVAS - REATIVADO PARA TAREFAS
    * 
-   * Função original enviava notificações do navegador, mas foi desativada pois:
-   * - Causava re-renders quando chamada frequentemente
-   * - Não é essencial para funcionamento básico do sistema
-   * - Pode ser reativada individualmente no futuro
+   * Função reativada APENAS para notificações de criação de tarefas.
+   * Não causa re-renders pois é chamada apenas sob demanda (não automaticamente).
+   * Segura para uso pontual quando uma tarefa é atribuída ao usuário.
    */
-  const sendNativeNotification = (title: string, options?: NotificationOptions) => {
-    // 🚫 DESATIVADO - Não enviar notificações nativas
-    console.log('📝 Notificação desativada:', title); // Log para debug se necessário
-    return null;
+  const sendNativeNotification = (title: string, options?: NotificationOptions): Notification | null => {
+    if (!isSupported || permission !== 'granted') {
+      console.log('📝 Notificação não enviada: sem permissão ou suporte');
+      return null;
+    }
+
+    try {
+      const notification = new Notification(title, {
+        icon: '/rockfeller-favicon.png',
+        badge: '/rockfeller-favicon.png',
+        tag: 'task-assignment', // Evita notificações duplicadas
+        renotify: true,
+        requireInteraction: false, // Não bloqueia o usuário
+        silent: false,
+        ...options
+      });
+
+      // Auto-close após 8 segundos
+      setTimeout(() => {
+        notification.close();
+      }, 8000);
+
+      console.log('✅ Notificação enviada:', title);
+      return notification;
+    } catch (error) {
+      console.error('❌ Erro ao enviar notificação:', error);
+      return null;
+    }
   };
 
   /**
@@ -299,6 +322,50 @@ export const useNotifications = () => {
   // - Pode ser solicitado sob demanda no futuro
   // - Remove uma possível fonte de re-renders
 
+  /**
+   * ✅ NOTIFICAR TAREFA ATRIBUÍDA - NOVA FUNCIONALIDADE
+   * 
+   * Função específica para notificar quando uma tarefa é criada/atribuída ao usuário atual.
+   * Chamada apenas sob demanda quando há uma nova atribuição.
+   * Não causa re-renders automáticos ou verificações periódicas.
+   */
+  const notifyTaskAssigned = (taskTitle: string, creatorName?: string) => {
+    if (!currentUser) return null;
+
+    const title = '📋 Nova Tarefa Atribuída';
+    const body = creatorName 
+      ? `${creatorName} atribuiu a tarefa: "${taskTitle}"`
+      : `Nova tarefa atribuída: "${taskTitle}"`;
+
+    return sendNativeNotification(title, {
+      body,
+      tag: `task-assigned-${Date.now()}`, // Tag única para evitar agrupamento
+      icon: '/rockfeller-favicon.png'
+    });
+  };
+
+  /**
+   * ✅ NOTIFICAR TAREFA CONCLUÍDA - NOVA FUNCIONALIDADE
+   * 
+   * Função específica para notificar o criador da tarefa quando ela é concluída.
+   * Chamada apenas quando o status muda para 'CONCLUIDA' e o usuário atual não é o criador.
+   * Não causa re-renders automáticos ou verificações periódicas.
+   */
+  const notifyTaskCompleted = (taskTitle: string, completedBy?: string) => {
+    if (!currentUser) return null;
+
+    const title = '✅ Tarefa Concluída';
+    const body = completedBy 
+      ? `${completedBy} concluiu a tarefa: "${taskTitle}"`
+      : `Tarefa concluída: "${taskTitle}"`;
+
+    return sendNativeNotification(title, {
+      body,
+      tag: `task-completed-${Date.now()}`, // Tag única para evitar agrupamento
+      icon: '/rockfeller-favicon.png'
+    });
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return {
@@ -313,6 +380,10 @@ export const useNotifications = () => {
     removeNotification,
     clearAllNotifications,
     checkOverdueTasks,
-    checkPendingTasks
+    checkPendingTasks,
+    // ✅ Novas funções específicas para notificações de tarefa
+    notifyTaskAssigned,
+    notifyTaskCompleted,
+    sendNativeNotification
   };
 }; 
