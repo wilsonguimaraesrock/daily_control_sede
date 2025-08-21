@@ -9,7 +9,7 @@ import NotificationCenter from './NotificationCenter';
 import UserProfile from './UserProfile';
 import Logo from '@/components/ui/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { getRoleIcon, getRoleColor, getRoleLabel, getOrganizationTitle } from '@/utils/permissions';
+import { getRoleIcon, getRoleColor, getRoleLabel, getOrganizationTitle, canManageUsers } from '@/utils/permissions';
 
 const UserHeader: React.FC = () => {
   const { currentUser, currentOrganization, isSuperAdmin, canSwitchOrganization, logout } = useAuth();
@@ -58,7 +58,9 @@ const UserHeader: React.FC = () => {
               <UserProfile />
               
               <ThemeToggle />
-              <NotificationCenter />
+              
+              {/* Notificações - apenas para administradores */}
+              {canManageUsers(currentUser) && <NotificationCenter />}
               
               {/* Franchise Access */}
               {showFranchiseAccess && (
