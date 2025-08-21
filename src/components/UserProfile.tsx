@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import Avatar from '@/components/ui/Avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Camera, Lock, Phone, Mail, Building2, Edit, Save, X, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -221,6 +221,9 @@ const UserProfile: React.FC = () => {
             <User className="w-5 h-5" />
             Meu Perfil
           </DialogTitle>
+          <DialogDescription>
+            Gerencie suas informações pessoais e configurações de segurança
+          </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="profile" className="w-full">
