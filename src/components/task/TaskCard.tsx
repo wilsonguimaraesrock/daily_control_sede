@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import Avatar from '@/components/ui/Avatar';
 import { Calendar, Clock, CheckCircle, User, Edit, History, Users, UserPlus } from 'lucide-react';
 import { Task } from '@/types/task';
 
@@ -102,20 +101,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
             if (creator) {
               // Se temos informações completas do criador da API
               return (
-                <div className="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
+                <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
                   <UserPlus className="w-3 h-3" />
-                  <span className="text-xs">Criado por:</span>
-                  <div className="flex items-center gap-1">
-                    <Avatar
-                      src={creator.avatarUrl}
-                      name={creator.name}
-                      size="xs"
-                      alt={creator.name}
-                    />
-                    <span className="text-xs text-blue-600 font-medium dark:text-blue-400">
-                      {creator.name}
-                    </span>
-                  </div>
+                  <span className="text-xs">Criado por: <span className="text-blue-600 font-medium dark:text-blue-400">{creator.name}</span></span>
                 </div>
               );
             } else if (creatorId) {
@@ -139,33 +127,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
             
             // Se temos assignments da API (com informações completas do usuário)
             if (assignments.length > 0) {
-              return (
-                <div className="flex items-center gap-2 text-muted-foreground dark:text-slate-400">
-                  <Users className="w-3 h-3" />
-                  <span className="text-xs">Atribuído:</span>
-                  <div className="flex items-center gap-1">
-                    {assignments.map((assignment: any, index: number) => {
-                      const user = assignment.user;
-                      if (!user) return null;
-                      
-                      return (
-                        <div key={user.id || index} className="flex items-center gap-1">
-                          <Avatar
-                            src={user.avatarUrl}
-                            name={user.name}
-                            size="xs"
-                            alt={user.name}
-                          />
-                          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-                            {user.name}
-                          </span>
-                          {index < assignments.length - 1 && <span className="text-xs">,</span>}
-                        </div>
-                      );
-                    })}
+              const userNames = assignments
+                .map((assignment: any) => assignment.user?.name)
+                .filter(Boolean)
+                .join(', ');
+              
+              if (userNames) {
+                return (
+                  <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
+                    <Users className="w-3 h-3" />
+                    <span className="text-xs">Atribuído: <span className="text-blue-600 font-medium dark:text-blue-400">{userNames}</span></span>
                   </div>
-                </div>
-              );
+                );
+              }
             }
             
             // Fallback para assigned_users (apenas IDs)
@@ -173,7 +147,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               return (
                 <div className="flex items-center gap-1 text-muted-foreground dark:text-slate-400">
                   <Users className="w-3 h-3" />
-                  <span className="text-xs">Atribuído: {assignedUserIds.map((userId: string) => getUserName(userId)).join(', ')}</span>
+                  <span className="text-xs">Atribuído: <span className="text-blue-600 font-medium dark:text-blue-400">{assignedUserIds.map((userId: string) => getUserName(userId)).join(', ')}</span></span>
                 </div>
               );
             }
