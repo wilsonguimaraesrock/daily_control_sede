@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       // Get user profile
       const userProfile = await prisma.userProfile.findUnique({
-        where: { userId: user.userId },
+        where: { id: user.id },
         select: {
           id: true,
           userId: true,
@@ -85,7 +85,7 @@ export default async function handler(req, res) {
 
       // Update user profile
       const updatedProfile = await prisma.userProfile.update({
-        where: { userId: user.userId },
+        where: { id: user.id },
         data: {
           name: name.trim(),
           phone: phone?.trim() || null,
@@ -136,7 +136,7 @@ export default async function handler(req, res) {
 
       // Get current user with password hash
       const currentUser = await prisma.userProfile.findUnique({
-        where: { userId: user.userId },
+        where: { id: user.id },
         select: {
           passwordHash: true
         }
@@ -157,7 +157,7 @@ export default async function handler(req, res) {
 
       // Update password
       await prisma.userProfile.update({
-        where: { userId: user.userId },
+        where: { id: user.id },
         data: {
           passwordHash: newPasswordHash,
           firstLoginCompleted: true
