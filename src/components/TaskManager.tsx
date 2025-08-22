@@ -127,7 +127,7 @@ const TaskManager = () => {
         return tasks.length;
       case 'today':
         return tasks.filter(task => 
-          task.dueDate && new Date(task.dueDate) >= startOfDay && new Date(task.dueDate) <= endOfDay
+          task.due_date && new Date(task.due_date) >= startOfDay && new Date(task.due_date) <= endOfDay
         ).length;
       case 'week':
         const weekStart = new Date(today);
@@ -135,17 +135,17 @@ const TaskManager = () => {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
         return tasks.filter(task => 
-          task.dueDate && new Date(task.dueDate) >= weekStart && new Date(task.dueDate) <= weekEnd
+          task.due_date && new Date(task.due_date) >= weekStart && new Date(task.due_date) <= weekEnd
         ).length;
       case 'month':
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
         const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         return tasks.filter(task => 
-          task.dueDate && new Date(task.dueDate) >= monthStart && new Date(task.dueDate) <= monthEnd
+          task.due_date && new Date(task.due_date) >= monthStart && new Date(task.due_date) <= monthEnd
         ).length;
       case 'overdue':
         return tasks.filter(task => 
-          task.dueDate && new Date(task.dueDate) < today && task.status?.toLowerCase() !== 'concluida'
+          task.due_date && new Date(task.due_date) < today && task.status?.toLowerCase() !== 'concluida'
         ).length;
       default:
         return 0;
@@ -155,7 +155,7 @@ const TaskManager = () => {
   const updateTaskStatus = async (taskId: string, status: string) => {
     setUpdatingTask(taskId);
     try {
-      await updateTask(taskId, { status });
+      await updateTask(taskId, { status: status as any });
       setLastUpdateTime(new Date());
     } finally {
       setUpdatingTask(null);
@@ -174,24 +174,27 @@ const TaskManager = () => {
     // 🔒 FRANCHISE ADMIN: Também tem poderes elevados
     if (currentUser.role === 'franchise_admin') return true;
     
+    // 🔒 COORDENADOR: Pode editar tarefas e mudar status (NOVA PERMISSÃO)
+    if (currentUser.role === 'coordenador') return true;
+    
     // Criador da tarefa pode editar - verificar múltiplos campos
     const creatorId = (task as any).creator?.id || (task as any).createdBy || task.created_by;
     const isCreator = creatorId === currentUser.id || 
-                     creatorId === currentUser.userId ||
-                     task.createdBy === currentUser.userId ||
-                     task.createdBy === currentUser.id;
+                     creatorId === currentUser.user_id ||
+                     task.created_by === currentUser.user_id ||
+                     task.created_by === currentUser.id;
     
     if (isCreator) return true;
     
     // 🔧 FIX: Usuários atribuídos à tarefa podem gerenciar suas tarefas
-    const isAssignedToTask = task.assignments?.some((assignment: any) => 
-      assignment.user?.userId === currentUser.userId || 
-      assignment.user?.id === currentUser.userId ||
+    const isAssignedToTask = (task as any).assignments?.some((assignment: any) => 
+      assignment.user?.user_id === currentUser.user_id || 
+      assignment.user?.id === currentUser.user_id ||
       assignment.user?.id === currentUser.id ||
-      assignment.userId === currentUser.userId ||
+      assignment.userId === currentUser.user_id ||
       assignment.userId === currentUser.id
-    ) || task.assigned_users?.includes(currentUser.userId) ||
-         task.assigned_users?.includes(currentUser.id);
+    ) || (task as any).assigned_users?.includes(currentUser.user_id) ||
+         (task as any).assigned_users?.includes(currentUser.id);
     
     return isAssignedToTask;
   };
