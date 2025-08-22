@@ -26,9 +26,9 @@ export const isTaskOverdue = (task: { due_date?: string; dueDate?: string; statu
 };
 
 export const getStatusColor = (status: string, task?: { due_date?: string; status: string }) => {
-  // Se a tarefa está atrasada, sempre mostrar em vermelho
+  // Se a tarefa está atrasada, sempre mostrar em laranja (como no card de indicadores)
   if (task && isTaskOverdue(task)) {
-    return 'dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30 bg-red-500 text-white border-red-600';
+    return 'dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-500/30 bg-orange-500 text-white border-orange-600';
   }
 
   // 🔧 FIX: Normalize status to lowercase for comparison
@@ -47,9 +47,19 @@ export const getPriorityColor = (priority: string) => {
   // 🔧 FIX: Normalize priority to lowercase for comparison
   const normalizedPriority = priority?.toLowerCase();
   
+  // 🎨 DEBUG: Cores atualizadas - Prioridade Média agora é ROXA
+  // 🐛 DEBUG TEMPORÁRIO: Log para verificar se função está sendo chamada
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🎨 getPriorityColor Debug:', {
+      priority,
+      normalizedPriority,
+      result: normalizedPriority === 'media' ? 'ROXA' : 'OUTRA_COR'
+    });
+  }
+  
   switch (normalizedPriority) {
     case 'baixa': return 'dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30 bg-blue-500 text-white border-blue-600';
-    case 'media': return 'dark:bg-orange-500/20 dark:text-orange-400 dark:border-orange-500/30 bg-orange-500 text-white border-orange-600';
+    case 'media': return 'dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-500/30 bg-purple-500 text-white border-purple-600';
     case 'urgente': return 'dark:bg-red-600/20 dark:text-red-500 dark:border-red-600/30 bg-red-600 text-white border-red-700';
     default: return 'dark:bg-gray-500/20 dark:text-gray-400 dark:border-gray-500/30 bg-gray-400 text-black border-gray-500';
   }
