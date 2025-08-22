@@ -99,11 +99,13 @@ export default async function handler(req, res) {
         userUserId: user.userId,
         taskCreatedBy: existingTask.createdBy,
         isSuperAdmin: user.role === 'super_admin',
-        isAdmin: user.role === 'admin'
+        isAdmin: user.role === 'admin',
+        isCoordenador: user.role === 'coordenador'
       });
       
       const canEdit = user.role === 'super_admin' || 
                      user.role === 'admin' || 
+                     user.role === 'coordenador' ||  // 🔒 NOVA PERMISSÃO: Coordenadores podem editar
                      existingTask.createdBy === user.id ||  // 🔧 FIX: usar user.id 
                      existingTask.createdBy === user.userId ||
                      existingTask.createdBy === user.user_id;
