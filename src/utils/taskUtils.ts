@@ -58,7 +58,7 @@ export const getPriorityColor = (priority: string) => {
   }
   
   switch (normalizedPriority) {
-    case 'baixa': return 'dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30 bg-blue-500 text-white border-blue-600';
+    case 'baixa': return 'dark:bg-sky-500/20 dark:text-sky-400 dark:border-sky-500/30 bg-sky-400 text-white border-sky-500';
     case 'media': return 'dark:bg-purple-500/20 dark:text-purple-400 dark:border-purple-500/30 bg-purple-500 text-white border-purple-600';
     case 'urgente': return 'dark:bg-red-600/20 dark:text-red-500 dark:border-red-600/30 bg-red-600 text-white border-red-700';
     default: return 'dark:bg-gray-500/20 dark:text-gray-400 dark:border-gray-500/30 bg-gray-400 text-black border-gray-500';
