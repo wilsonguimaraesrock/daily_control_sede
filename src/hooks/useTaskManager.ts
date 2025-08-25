@@ -109,7 +109,19 @@ export const useTaskManager = () => {
   const loadUserProfiles = useCallback(async () => {
     try {
       console.log('🔍 useTaskManager loadUserProfiles DEBUG: Starting...');
-      const response = await fetch(`${API_BASE_URL}/api/users`, {
+      
+      // 🔒 FILTRO POR ORGANIZAÇÃO: Buscar apenas usuários da escola/departamento específico
+      let apiUrl = `${API_BASE_URL}/api/users`;
+      
+      // Se não for super_admin, buscar apenas usuários da organização atual
+      if (currentUser && currentUser.role !== 'super_admin' && currentUser.organization_id) {
+        apiUrl = `${API_BASE_URL}/api/organizations/${currentUser.organization_id}/users`;
+        console.log('🔍 useTaskManager loadUserProfiles DEBUG: Filtering by organization:', currentUser.organization_id);
+      } else {
+        console.log('🔍 useTaskManager loadUserProfiles DEBUG: Super admin - loading all users');
+      }
+      
+      const response = await fetch(apiUrl, {
         headers: getAuthHeaders()
       });
 
@@ -131,7 +143,7 @@ export const useTaskManager = () => {
     } catch (error) {
       console.error('❌ useTaskManager loadUserProfiles error:', error);
     }
-  }, []);
+  }, [currentUser]);
 
   // ✅ CRIAR TAREFA
   const addTask = async (taskData: Partial<Task>) => {
