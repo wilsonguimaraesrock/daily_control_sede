@@ -1,0 +1,15 @@
+FORCE VERCEL REBUILD
+====================
+
+Este arquivo foi criado para forçar o Vercel a detectar mudanças e fazer um novo deploy.
+
+Data: $(date)
+Timestamp: $(date +%s)
+
+Mudanças implementadas:
+- Remoção da aba "Testar Notificação" 
+- Simplificação do centro de notificações
+- Foco apenas no histórico de notificações
+- Adição de notificações de exemplo
+
+Após o deploy, este arquivo pode ser removido.
