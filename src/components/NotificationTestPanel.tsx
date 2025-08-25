@@ -36,6 +36,49 @@ const NotificationTestPanel: React.FC = () => {
       } catch (error) {
         console.error('Erro ao carregar histórico de notificações:', error);
       }
+    } else {
+      // Adicionar notificações de exemplo se não houver nenhuma
+      const exampleNotifications: NotificationItem[] = [
+        {
+          id: '1',
+          title: 'Nova Tarefa Atribuída!',
+          message: 'Você foi atribuído à tarefa: "Revisar relatório mensal"',
+          type: 'task_assigned',
+          timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutos atrás
+          read: false,
+          taskId: 'task-001'
+        },
+        {
+          id: '2',
+          title: 'Tarefa Vencida!',
+          message: '"Atualizar documentação" venceu há 2 dia(s)',
+          type: 'task_overdue',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 dias atrás
+          read: true,
+          taskId: 'task-002'
+        },
+        {
+          id: '3',
+          title: 'Tarefa Próxima do Vencimento',
+          message: '"Preparar apresentação" vence em 4h',
+          type: 'task_pending',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hora atrás
+          read: false,
+          taskId: 'task-003'
+        },
+        {
+          id: '4',
+          title: 'Sistema Atualizado',
+          message: 'Nova funcionalidade de histórico de notificações disponível',
+          type: 'system',
+          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 horas atrás
+          read: false
+        }
+      ];
+      
+      // Salvar notificações de exemplo
+      localStorage.setItem('notificationHistory', JSON.stringify(exampleNotifications));
+      setNotifications(exampleNotifications);
     }
   }, []);
 
